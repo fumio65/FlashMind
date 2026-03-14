@@ -98,16 +98,16 @@
 ## ⚪ Sprint 6 — Polish & Submit
 **Branch:** `feat/polish` (or directly on `dev`)
 
-- [ ] Responsive QA — all 13 screens at min 1024px width
-- [ ] Verify all shadcn/ui components render correctly (Button variants, Badge colors, Dialog open/close)
-- [ ] Check Tailwind v4 classes compile — no silent failures from v3 syntax
-- [ ] Test Flashcard Mode keyboard shortcuts in Chrome + Firefox
-- [ ] Check AdminRoute blocks non-admin users correctly
-- [ ] Clean up `console.log` statements
-- [ ] Update `CONTEXT.md` — mark all screens ✅ Done
-- [ ] PR: `feat/polish` → `dev`
-- [ ] PR: `dev` → `main`
-- [ ] Tag release: `git tag v1.0.0-frontend && git push origin --tags`
+- [x] Responsive QA — all 13 screens at min 1024px width
+- [x] Verify all shadcn/ui components render correctly (Button variants, Badge colors, Dialog open/close)
+- [x] Check Tailwind v4 classes compile — no silent failures from v3 syntax
+- [x] Test Flashcard Mode keyboard shortcuts in Chrome + Firefox
+- [x] Check AdminRoute blocks non-admin users correctly
+- [x] Clean up `console.log` statements
+- [x] Update `CONTEXT.md` — mark all screens ✅ Done
+- [x] PR: `feat/polish` → `dev`
+- [x] PR: `dev` → `main`
+- [x] Tag release: `git tag v1.0.0-frontend && git push origin --tags`
 
 **Commit:** `chore: final QA and frontend release v1.0.0`
 

@@ -47,19 +47,19 @@
 ## Current Screens (13 total)
 | # | Screen | Route | Status |
 |---|---|---|---|
-| 01 | Landing Page | `/` | ⬜ Not started |
-| 02 | Login | `/login` | ⬜ Not started |
-| 03 | Register | `/register` | ⬜ Not started |
-| 04 | Dashboard | `/dashboard` | ⬜ Not started |
-| 05 | Browse Decks | `/browse` | ⬜ Not started |
-| 06 | Create Deck | `/decks/new` | ⬜ Not started |
-| 07 | Deck Detail | `/decks/:id` | ⬜ Not started |
-| 08 | Flashcard Mode | `/study/:id?mode=flashcard` | ⬜ Not started |
-| 09 | Quiz Mode | `/study/:id?mode=quiz` | ⬜ Not started |
-| 10 | My Profile | `/profile` | ⬜ Not started |
-| 11 | Admin Dashboard | `/admin` | ⬜ Not started |
-| 12 | Admin Deck Management | `/admin/decks` | ⬜ Not started |
-| 13 | Admin User Management | `/admin/users` | ⬜ Not started |
+| 01 | Landing Page         | `/`                        | ✅ Done |
+| 02 | Login                | `/login`                   | ✅ Done |
+| 03 | Register             | `/register`                | ✅ Done |
+| 04 | Dashboard            | `/dashboard`               | ✅ Done |
+| 05 | Browse Decks         | `/browse`                  | ✅ Done |
+| 06 | Create Deck          | `/decks/new`               | ✅ Done |
+| 07 | Deck Detail          | `/decks/:id`               | ✅ Done |
+| 08 | Flashcard Mode       | `/study/:id?mode=flashcard`| ✅ Done |
+| 09 | Quiz Mode            | `/study/:id?mode=quiz`     | ✅ Done |
+| 10 | My Profile           | `/profile`                 | ✅ Done |
+| 11 | Admin Dashboard      | `/admin`                   | ✅ Done |
+| 12 | Admin Deck Mgmt      | `/admin/decks`             | ✅ Done |
+| 13 | Admin User Mgmt      | `/admin/users`             | ✅ Done |
 
 > Update status: ⬜ Not started → 🔄 In progress → ✅ Done
 
