@@ -69,14 +69,14 @@
 ## 🟢 Sprint 4 — Study Modes
 **Branch:** `feat/study`
 
-- [ ] `StudyPage.jsx` — reads `?mode=` query param, renders FlashcardMode or QuizMode component
-- [ ] `src/features/study/components/FlipCard.jsx` — CSS 3D flip on click + Spacebar, front/back faces
-- [ ] Flashcard Mode — card counter, progress bar, Still Learning / Got It buttons, ← → keyboard shortcuts, completion summary
-- [ ] `src/features/study/hooks/useFlashcardMode.js` — tracks known/stillLearning arrays, current card index
-- [ ] Quiz Mode — 2×2 options grid, 30s countdown timer (yellow → red), score badge, green/red feedback, explanation panel, Next button
-- [ ] `src/features/study/hooks/useQuizMode.js` — timer logic, score tracking, answer state
-- [ ] `src/features/study/utils/generateQuizQuestions.js` — picks correct card + 3 distractors from mock deck, shuffles options
-- [ ] Verify keyboard navigation works (Space = flip, ← = Still Learning, → = Got It)
+- [x] `StudyPage.jsx` — reads `?mode=` query param, renders FlashcardMode or QuizMode component
+- [x] `src/features/study/components/FlipCard.jsx` — CSS 3D flip on click + Spacebar, front/back faces
+- [x] Flashcard Mode — card counter, progress bar, Still Learning / Got It buttons, ← → keyboard shortcuts, completion summary
+- [x] `src/features/study/hooks/useFlashcardMode.js` — tracks known/stillLearning arrays, current card index
+- [x] Quiz Mode — 2×2 options grid, 30s countdown timer (yellow → red), score badge, green/red feedback, explanation panel, Next button
+- [x] `src/features/study/hooks/useQuizMode.js` — timer logic, score tracking, answer state
+- [x] `src/features/study/utils/generateQuizQuestions.js` — picks correct card + 3 distractors from mock deck, shuffles options
+- [x] Verify keyboard navigation works (Space = flip, ← = Still Learning, → = Got It)
 
 **Commit:** `feat(study): flashcard mode and quiz mode with mock deck data`
 
