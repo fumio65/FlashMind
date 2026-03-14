@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FlashMind — Web Wireframes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f11;
+    --surface: #1a1a1f;
+    --surface2: #242429;
+    --border: #2e2e36;
+    --text: #e8e8f0;
+    --text-muted: #6b6b7e;
+    --text-dim: #3e3e4e;
+    --accent: #6c63ff;
+    --accent-dim: #2d2a55;
+    --green: #2dd4a0;
+    --yellow: #febc2e;
+    --red: #ff4d6d;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { background: var(--bg); font-family: var(--sans); color: var(--text); min-height: 100vh; }
+
+  /* ── Shell Layout ── */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
+
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 20px 0 32px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .sidebar-logo .app-name { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: .06em; text-transform: uppercase; }
+  .sidebar-logo .app-sub  { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: var(--mono); }
+
+  .sidebar-section { padding: 6px 12px 4px; font-size: 10px; font-family: var(--mono); color: var(--text-dim); text-transform: uppercase; letter-spacing: .1em; margin-top: 8px; }
+
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; font-size: 13px; color: var(--text-muted); transition: all .15s; border-left: 2px solid transparent; }
+  .nav-item:hover  { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+  .nav-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .topbar { height: 48px; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 12px; flex-shrink: 0; background: var(--surface); }
+  .topbar-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .topbar-path  { font-family: var(--mono); font-size: 11px; color: var(--text-dim); margin-left: auto; }
+
+  .content { flex: 1; overflow-y: auto; padding: 32px; display: flex; gap: 32px; align-items: flex-start; }
+
+  /* ── Screen Views ── */
+  .screen-view { display: none; }
+  .screen-view.active { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+
+  .screen-container { flex-shrink: 0; }
+  .screen-label { font-family: var(--mono); font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; }
+
+  /* ── Web Browser Frame ── */
+  .web-frame {
+    background: var(--surface2);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  }
+  .web-frame.sm  { width: 780px; }
+  .web-frame.md  { width: 900px; }
+  .web-frame.lg  { width: 960px; }
+
+  .web-chrome { height: 36px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 6px; }
+  .chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .chrome-url { margin-left: 12px; background: var(--surface2); border-radius: 4px; padding: 3px 10px; font-family: var(--mono); font-size: 10px; color: var(--text-muted); flex: 1; max-width: 320px; }
+
+  /* ── Annotations ── */
+  .annotations { width: 260px; flex-shrink: 0; }
+  .ann-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; }
+  .ann-item  { display: flex; gap: 10px; margin-bottom: 14px; }
+  .ann-num   { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 10px; font-family: var(--mono); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .ann-text  { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .ann-text strong { display: block; color: var(--text); font-size: 12px; font-weight: 500; margin-bottom: 1px; }
+
+  /* ── Shared Inner Components ── */
+  /* App navbar inside web frames */
+  .app-nav { height: 56px; background: #1a1a2e; display: flex; align-items: center; padding: 0 24px; gap: 24px; }
+  .app-nav-logo { font-size: 15px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 6px; margin-right: 8px; }
+  .app-nav-link { font-size: 13px; color: rgba(255,255,255,.5); cursor: pointer; }
+  .app-nav-link.active { color: #fff; font-weight: 600; }
+  .app-nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .app-nav-btn { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+  .app-nav-btn.ghost  { background: rgba(255,255,255,.08); color: #fff; }
+  .app-nav-btn.accent { background: #6c63ff; color: #fff; }
+  .app-nav-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#6c63ff,#4facfe); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; }
+
+  /* Page body */
+  .page-body { background: #f5f5f0; min-height: 460px; }
+  .page-body.white { background: #fff; }
+
+  /* Auth form panel */
+  .auth-split { display: flex; min-height: 480px; }
+  .auth-left  { flex: 1; background: linear-gradient(135deg,#1a1a2e,#2d2a55); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 16px; }
+  .auth-right { width: 380px; flex-shrink: 0; background: #fff; padding: 36px 32px; display: flex; flex-direction: column; justify-content: center; }
+
+  /* Form components */
+  .f-label { font-size: 11px; font-weight: 600; color: #555; letter-spacing: .04em; margin-bottom: 5px; display: block; }
+  .f-input  { width: 100%; background: #f9f9f9; border: 1.5px solid #e0e0dc; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #1a1a2e; font-family: var(--sans); margin-bottom: 14px; }
+  .f-input.ph { color: #bbb; }
+  .f-input.textarea { height: 80px; resize: none; }
+  .f-btn    { width: 100%; background: #1a1a2e; color: #fff; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--sans); }
+  .f-btn.accent { background: #6c63ff; }
+  .f-link   { font-size: 12px; color: #6c63ff; font-weight: 600; cursor: pointer; }
+
+  /* Content cards */
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 16px; }
+  .card-sm { background: #fff; border-radius: 10px; border: 1px solid #e8e8e4; padding: 12px 14px; }
+
+  /* Badges */
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; display: inline-block; }
+  .badge-purple { background: #ede9ff; color: #6c63ff; }
+  .badge-green  { background: #e6fdf6; color: #1a8a60; }
+  .badge-blue   { background: #e6f0ff; color: #2563eb; }
+  .badge-yellow { background: #fff8e6; color: #b45309; }
+  .badge-red    { background: #fff0f3; color: #e53e3e; }
+  .badge-gray   { background: #f0f0ec; color: #666; }
+
+  /* Progress bar */
+  .prog-bar  { height: 6px; background: #e8e8e4; border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; }
+
+  /* Inner sidebar for app pages */
+  .inner-layout { display: flex; min-height: 480px; }
+  .inner-sidebar { width: 200px; background: #1a1a2e; flex-shrink: 0; padding: 16px 0; display: flex; flex-direction: column; }
+  .inner-sidebar-logo { padding: 4px 16px 14px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 8px; }
+  .inner-sidebar-logo-name { font-size: 13px; font-weight: 800; color: #fff; }
+  .inner-sidebar-logo-sub  { font-size: 10px; color: rgba(255,255,255,.3); font-family: var(--mono); }
+  .inner-nav { padding: 8px 14px; font-size: 12px; color: rgba(255,255,255,.45); display: flex; align-items: center; gap: 8px; cursor: pointer; border-left: 2px solid transparent; }
+  .inner-nav.active { color: #fff; border-left-color: #6c63ff; background: rgba(108,99,255,.15); }
+  .inner-nav:hover:not(.active) { color: rgba(255,255,255,.7); }
+  .inner-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f5f5f0; }
+  .inner-topbar { height: 48px; background: #fff; border-bottom: 1px solid #e8e8e4; display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
+  .inner-topbar-title { font-size: 14px; font-weight: 700; color: #1a1a2e; flex: 1; }
+  .inner-content { flex: 1; padding: 20px; overflow-y: auto; }
+
+  /* Stat card */
+  .stat-card { background: #fff; border-radius: 10px; border: 1px solid #e8e8e4; padding: 14px 16px; }
+  .stat-label { font-size: 10px; color: #aaa; font-family: var(--mono); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 800; color: #1a1a2e; }
+  .stat-sub   { font-size: 10px; color: #aaa; margin-top: 2px; }
+
+  /* Table */
+  .tbl-card { background: #fff; border-radius: 10px; border: 1px solid #e8e8e4; overflow: hidden; }
+  .tbl-hd   { padding: 10px 16px; border-bottom: 1px solid #f0f0ec; display: flex; align-items: center; gap: 8px; }
+  .tbl-title{ font-size: 13px; font-weight: 600; color: #1a1a2e; flex: 1; }
+  .tbl table{ width: 100%; border-collapse: collapse; }
+  .tbl th   { padding: 8px 16px; font-size: 10px; font-family: var(--mono); color: #aaa; text-transform: uppercase; letter-spacing: .06em; text-align: left; background: #fafaf8; border-bottom: 1px solid #f0f0ec; }
+  .tbl td   { padding: 10px 16px; font-size: 12px; color: #333; border-bottom: 1px solid #f5f5f2; }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: #fafaf8; }
+
+  /* Deck grid card */
+  .deck-card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; overflow: hidden; cursor: pointer; transition: box-shadow .15s; }
+  .deck-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+  .deck-cover { height: 80px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+  .deck-body  { padding: 10px 12px 12px; }
+  .deck-title { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+  .deck-meta  { font-size: 10px; color: #aaa; font-family: var(--mono); }
+
+  /* Study mode tiles */
+  .mode-tile { border-radius: 12px; padding: 16px; cursor: pointer; text-align: center; transition: transform .1s; }
+  .mode-tile:hover { transform: scale(1.02); }
+  .mode-icon  { font-size: 28px; margin-bottom: 6px; }
+  .mode-label { font-size: 12px; font-weight: 700; }
+
+  /* Flip card */
+  .flip-front { background: linear-gradient(135deg,#6c63ff,#4facfe); border-radius: 16px; padding: 32px 28px; text-align: center; color: #fff; }
+  .flip-back  { background: #fff; border: 2px solid #6c63ff; border-radius: 16px; padding: 28px; text-align: center; color: #1a1a2e; }
+
+  /* Quiz option */
+  .quiz-opt { border-radius: 10px; padding: 12px 16px; font-size: 13px; cursor: pointer; margin-bottom: 8px; border: 1.5px solid #e0e0dc; background: #fff; color: #333; }
+  .quiz-opt.correct { background: #e6fdf6; border-color: #2dd4a0; color: #1a8a60; font-weight: 700; }
+  .quiz-opt.wrong   { background: #fff0f3; border-color: #ff4d6d; color: #e53e3e; font-weight: 700; }
+
+  /* Leaderboard row */
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #f0f0ec; }
+  .lb-row.me { background: #ede9ff; }
+  .lb-rank { font-size: 16px; width: 28px; text-align: center; }
+  .lb-name { font-size: 12px; font-weight: 600; color: #1a1a2e; flex: 1; }
+  .lb-pts  { font-size: 13px; font-weight: 800; color: #6c63ff; font-family: var(--mono); }
+
+  /* Upload zone */
+  .upload-zone { background: repeating-linear-gradient(45deg,#f5f5f0,#f5f5f0 6px,#eee 6px,#eee 12px); border: 2px dashed #ccc; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+
+  /* Chip filter */
+  .chip { padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 500; cursor: pointer; border: 1.5px solid #e0e0dc; color: #666; background: transparent; }
+  .chip.active { background: #1a1a2e; border-color: #1a1a2e; color: #fff; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ════════════════════ SIDEBAR NAV ════════════════════ -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="app-name">⚡ FlashMind</div>
+      <div class="app-sub">web wireframes v2.0</div>
+    </div>
+
+    <div class="sidebar-section">Auth</div>
+    <div class="nav-item active" onclick="show('landing')">    <span class="nav-icon">🏠</span>Landing Page</div>
+    <div class="nav-item" onclick="show('login')">             <span class="nav-icon">🔐</span>Login</div>
+    <div class="nav-item" onclick="show('register')">          <span class="nav-icon">📝</span>Register</div>
+
+    <div class="sidebar-section">Student</div>
+    <div class="nav-item" onclick="show('dashboard')">         <span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="show('browse')">            <span class="nav-icon">🔍</span>Browse Decks</div>
+    <div class="nav-item" onclick="show('create')">            <span class="nav-icon">➕</span>Create Deck</div>
+    <div class="nav-item" onclick="show('deckdetail')">        <span class="nav-icon">📚</span>Deck Detail</div>
+    <div class="nav-item" onclick="show('profile')">           <span class="nav-icon">👤</span>My Profile</div>
+
+    <div class="sidebar-section">Study Modes</div>
+    <div class="nav-item" onclick="show('flashcard')">         <span class="nav-icon">🃏</span>Flashcard Mode</div>
+    <div class="nav-item" onclick="show('quiz')">              <span class="nav-icon">📝</span>Quiz Mode</div>
+
+    <div class="sidebar-section">Admin</div>
+    <div class="nav-item" onclick="show('admin')">             <span class="nav-icon">🖥️</span>Admin Dashboard</div>
+    <div class="nav-item" onclick="show('admindecks')">        <span class="nav-icon">📋</span>Deck Management</div>
+    <div class="nav-item" onclick="show('adminusers')">        <span class="nav-icon">👥</span>User Management</div>
+  </div>
+
+  <!-- ════════════════════ MAIN ════════════════════ -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Landing Page</div>
+      <div class="topbar-path"  id="topbar-path">screens/landing</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ══════════════════════════════════════════
+           01 · LANDING PAGE
+      ══════════════════════════════════════════ -->
+      <div class="screen-view active" id="screen-landing">
+        <div class="screen-container">
+          <div class="screen-label">01 — Landing Page · /</div>
+          <div class="web-frame md">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app</div>
+            </div>
+            <!-- Navbar -->
+            <div class="app-nav">
+              <div class="app-nav-logo">⚡ FlashMind</div>
+              <div class="app-nav-link">Browse</div>
+              <div class="app-nav-link">Features</div>
+              <div class="app-nav-link">About</div>
+              <div class="app-nav-right">
+                <div class="app-nav-btn ghost">Log In</div>
+                <div class="app-nav-btn accent">Get Started</div>
+              </div>
+            </div>
+            <!-- Hero -->
+            <div style="background:linear-gradient(135deg,#1a1a2e 60%,#2d2a55);padding:52px 60px;display:flex;align-items:center;gap:48px;">
+              <div style="flex:1;">
+                <div style="display:inline-block;background:rgba(108,99,255,.2);color:#a89fff;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--mono);margin-bottom:14px;">🎓 FOR STUDENTS, BY STUDENTS</div>
+                <div style="font-size:36px;font-weight:900;color:#fff;line-height:1.15;margin-bottom:12px;">Study smarter with<br><span style="color:#a89fff;">AI-powered flashcards</span></div>
+                <div style="font-size:14px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:24px;">Create decks, quiz yourself, and track your progress. The fastest way to master any subject.</div>
+                <div style="display:flex;gap:12px;">
+                  <div style="background:#6c63ff;color:#fff;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;">Get Started — Free</div>
+                  <div style="background:rgba(255,255,255,.08);color:#fff;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:600;cursor:pointer;">Browse Decks →</div>
+                </div>
+              </div>
+              <!-- Feature cards preview -->
+              <div style="display:flex;flex-direction:column;gap:10px;min-width:220px;">
+                <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:20px;">🃏</span>
+                  <div><div style="font-size:12px;font-weight:700;color:#fff;">Flashcard Mode</div><div style="font-size:10px;color:rgba(255,255,255,.4);">Classic flip-card study</div></div>
+                </div>
+                <div style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:20px;">📝</span>
+                  <div><div style="font-size:12px;font-weight:700;color:#fff;">Quiz Mode</div><div style="font-size:10px;color:rgba(255,255,255,.4);">Auto-generated MCQ tests</div></div>
+                </div>
+                <div style="background:rgba(108,99,255,.2);border:1px solid rgba(108,99,255,.3);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+                  <span style="font-size:20px;">📊</span>
+                  <div><div style="font-size:12px;font-weight:700;color:#a89fff;">Track Progress</div><div style="font-size:10px;color:rgba(255,255,255,.4);">Streaks, mastery & analytics</div></div>
+                </div>
+              </div>
+            </div>
+            <!-- Stats bar -->
+            <div style="background:#fff;padding:18px 60px;display:flex;gap:48px;border-bottom:1px solid #eee;">
+              <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:#6c63ff;">1,248</div><div style="font-size:10px;color:#aaa;font-family:var(--mono);">STUDENTS</div></div>
+              <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:#2dd4a0;">342</div><div style="font-size:10px;color:#aaa;font-family:var(--mono);">PUBLIC DECKS</div></div>
+              <div style="text-align:center;"><div style="font-size:22px;font-weight:800;color:#febc2e;">8,921</div><div style="font-size:10px;color:#aaa;font-family:var(--mono);">SESSIONS TODAY</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Landing Page</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Guest Access</strong>Public page — no auth required. Guests can view this and browse public decks without signing in.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Hero CTAs</strong>"Get Started" → /register. "Browse Decks" → /browse. Both trigger key user journeys from first visit.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Feature Cards</strong>Visual teasers for the 3 major features. Clicking them scrolls to the features section below the fold.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Live Stats</strong>Platform stats (users, decks, sessions) loaded from a public GET /api/stats endpoint — no auth needed.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           02 · LOGIN
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-login">
+        <div class="screen-container">
+          <div class="screen-label">02 — Login · /login</div>
+          <div class="web-frame sm">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/login</div>
+            </div>
+            <div class="auth-split">
+              <!-- Left brand panel -->
+              <div class="auth-left">
+                <div style="font-size:40px;">⚡</div>
+                <div style="font-size:22px;font-weight:800;color:#fff;">FlashMind</div>
+                <div style="font-size:13px;color:rgba(255,255,255,.4);text-align:center;font-family:var(--mono);">study smarter, not harder</div>
+                <div style="margin-top:24px;display:flex;flex-direction:column;gap:10px;width:100%;">
+                  <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:center;"><span style="font-size:16px;">🃏</span><div style="font-size:12px;color:rgba(255,255,255,.6);">Create & study flashcard decks</div></div>
+                  <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:center;"><span style="font-size:16px;">📝</span><div style="font-size:12px;color:rgba(255,255,255,.6);">Quiz yourself with auto-generated tests</div></div>
+                  <div style="background:rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:center;"><span style="font-size:16px;">📊</span><div style="font-size:12px;color:rgba(255,255,255,.6);">Track your study progress & streaks</div></div>
+                </div>
+              </div>
+              <!-- Right form -->
+              <div class="auth-right">
+                <div style="font-size:22px;font-weight:800;color:#1a1a2e;margin-bottom:4px;">Welcome back 👋</div>
+                <div style="font-size:13px;color:#aaa;margin-bottom:24px;">Sign in to continue studying</div>
+
+                <label class="f-label">EMAIL ADDRESS</label>
+                <div class="f-input ph">student@university.edu</div>
+
+                <label class="f-label">PASSWORD</label>
+                <div class="f-input ph">••••••••</div>
+
+                <div style="display:flex;justify-content:flex-end;margin-bottom:18px;margin-top:-8px;"><span class="f-link">Forgot password?</span></div>
+
+                <div class="f-btn accent" style="margin-bottom:14px;">Sign In</div>
+
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                  <div style="flex:1;height:1px;background:#eee;"></div>
+                  <span style="font-size:11px;color:#bbb;font-family:var(--mono);">OR</span>
+                  <div style="flex:1;height:1px;background:#eee;"></div>
+                </div>
+
+                <div style="background:#fff;border:1.5px solid #e0e0dc;border-radius:10px;padding:10px;text-align:center;font-size:13px;font-weight:600;color:#333;cursor:pointer;margin-bottom:20px;">🔵 Continue with Google</div>
+                <div style="text-align:center;font-size:12px;color:#aaa;">Don't have an account? <span class="f-link">Register</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Login</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>JWT Auth (FR-02, FR-03)</strong>POST /api/auth/login returns a signed JWT. Token stored in localStorage, attached to all future API requests as Bearer token.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Google OAuth</strong>Optional single-tap login via Google. Reduces registration friction for students using school Google accounts.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Protected Redirect (FR-04)</strong>Accessing /dashboard without a valid JWT redirects here. After login, user is sent back to their original destination.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Split Layout</strong>Left panel reinforces brand value props. Right panel keeps the form focused. Standard SaaS auth pattern.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           03 · REGISTER
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-register">
+        <div class="screen-container">
+          <div class="screen-label">03 — Register · /register</div>
+          <div class="web-frame sm">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/register</div>
+            </div>
+            <div class="auth-split">
+              <div class="auth-left">
+                <div style="font-size:40px;">⚡</div>
+                <div style="font-size:22px;font-weight:800;color:#fff;">Join FlashMind</div>
+                <div style="font-size:12px;color:rgba(255,255,255,.4);font-family:var(--mono);text-align:center;">Start your study journey today</div>
+                <div style="margin-top:28px;background:rgba(255,255,255,.07);border-radius:12px;padding:16px;width:100%;">
+                  <div style="font-size:11px;color:rgba(255,255,255,.3);font-family:var(--mono);margin-bottom:8px;">WHAT YOU GET</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,.7);line-height:2;">✓ Unlimited flashcard decks<br>✓ 2 study modes (Flashcard & Quiz)<br>✓ Progress tracking & streaks<br>✓ Community deck library</div>
+                </div>
+              </div>
+              <div class="auth-right">
+                <div style="font-size:22px;font-weight:800;color:#1a1a2e;margin-bottom:4px;">Create Account 🎓</div>
+                <div style="font-size:13px;color:#aaa;margin-bottom:20px;">Already have one? <span class="f-link">Sign In</span></div>
+
+                <!-- Avatar upload -->
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;background:#f9f9f9;border:1.5px solid #e0e0dc;border-radius:10px;padding:12px;">
+                  <div class="upload-zone" style="width:54px;height:54px;border-radius:50%;flex-shrink:0;">
+                    <span style="font-size:20px;opacity:.35;">📷</span>
+                  </div>
+                  <div>
+                    <div style="font-size:12px;font-weight:600;color:#1a1a2e;">Profile Photo</div>
+                    <div style="font-size:11px;color:#aaa;">Optional · JPG, PNG, WEBP · max 5MB</div>
+                  </div>
+                </div>
+
+                <label class="f-label">FULL NAME</label>
+                <div class="f-input">Juan dela Cruz</div>
+
+                <label class="f-label">USERNAME</label>
+                <div class="f-input ph">@juandc</div>
+
+                <label class="f-label">EMAIL ADDRESS</label>
+                <div class="f-input ph">juan@university.edu</div>
+
+                <label class="f-label">PASSWORD</label>
+                <div class="f-input ph">min. 8 characters</div>
+
+                <div class="f-btn accent">Create My Account</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Register</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Avatar Upload (FR-06, FR-17)</strong>Image picked via file input → POST /api/upload/avatar via Multer. Cloudinary returns URL saved to User.avatar field.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Password Hashing (NFR-04)</strong>Server hashes password using bcrypt (cost factor 10) before saving. Password never stored or returned in plaintext.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Unique Validation (FR-01)</strong>Email and username checked for uniqueness on server. Inline error shown below the field if already taken.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Default Role</strong>New accounts default to "student" role. Admins can later promote users to "creator" or "admin" from the admin panel.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           04 · DASHBOARD
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-dashboard">
+        <div class="screen-container">
+          <div class="screen-label">04 — Dashboard · /dashboard</div>
+          <div class="web-frame lg">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/dashboard</div>
+            </div>
+            <div class="app-nav">
+              <div class="app-nav-logo">⚡ FlashMind</div>
+              <div class="app-nav-link active">Dashboard</div>
+              <div class="app-nav-link">Browse</div>
+              <div class="app-nav-link">My Decks</div>
+              <div class="app-nav-right">
+                <div class="app-nav-avatar">👤</div>
+              </div>
+            </div>
+            <div style="background:#f5f5f0;padding:24px;">
+              <!-- Greeting + streak -->
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                <div>
+                  <div style="font-size:22px;font-weight:800;color:#1a1a2e;">Good morning, Juan 👋</div>
+                  <div style="font-size:13px;color:#aaa;margin-top:2px;">You have 42 cards scheduled for review today.</div>
+                </div>
+                <div style="background:linear-gradient(135deg,#febc2e,#ff9500);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:10px;color:#fff;">
+                  <span style="font-size:28px;">🔥</span>
+                  <div><div style="font-size:20px;font-weight:900;">7 Day Streak!</div><div style="font-size:11px;opacity:.7;">Keep studying daily</div></div>
+                </div>
+              </div>
+              <!-- Stats row -->
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+                <div class="stat-card"><div class="stat-label">Cards Mastered</div><div class="stat-value" style="color:#6c63ff;">128</div><div class="stat-sub">↑ +14 this week</div></div>
+                <div class="stat-card"><div class="stat-label">Decks Studied</div><div class="stat-value" style="color:#2dd4a0;">12</div><div class="stat-sub">3 in progress</div></div>
+                <div class="stat-card"><div class="stat-label">Study Time</div><div class="stat-value">4.2h</div><div class="stat-sub">this week</div></div>
+              </div>
+              <!-- Recent decks + activity -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <!-- Recent decks -->
+                <div class="tbl-card">
+                  <div class="tbl-hd"><div class="tbl-title">Recent Decks</div><span style="font-size:12px;color:#6c63ff;cursor:pointer;font-weight:600;">View all →</span></div>
+                  <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;">
+                    <div>
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-size:13px;font-weight:700;color:#1a1a2e;">📐 Calculus — Limits</span><span class="badge badge-purple">Math</span></div>
+                      <div class="prog-bar"><div class="prog-fill" style="width:72%;background:#6c63ff;"></div></div>
+                      <div style="font-size:10px;color:#aaa;margin-top:3px;font-family:var(--mono);">72% mastered · 48 cards</div>
+                    </div>
+                    <div>
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-size:13px;font-weight:700;color:#1a1a2e;">🧬 Cell Biology Ch.4</span><span class="badge badge-green">Science</span></div>
+                      <div class="prog-bar"><div class="prog-fill" style="width:45%;background:#2dd4a0;"></div></div>
+                      <div style="font-size:10px;color:#aaa;margin-top:3px;font-family:var(--mono);">45% mastered · 32 cards</div>
+                    </div>
+                    <div>
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;"><span style="font-size:13px;font-weight:700;color:#1a1a2e;">💻 React Hooks</span><span class="badge badge-blue">IT</span></div>
+                      <div class="prog-bar"><div class="prog-fill" style="width:88%;background:#2563eb;"></div></div>
+                      <div style="font-size:10px;color:#aaa;margin-top:3px;font-family:var(--mono);">88% mastered · 25 cards</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Weekly chart placeholder -->
+                <div class="tbl-card">
+                  <div class="tbl-hd"><div class="tbl-title">Weekly Study Activity</div><span class="badge badge-gray">Cards reviewed / day</span></div>
+                  <div style="padding:16px;">
+                    <div style="display:flex;align-items:flex-end;gap:10px;height:100px;border-bottom:1px solid #eee;padding-bottom:8px;justify-content:space-around;">
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:28px;background:#ede9ff;border-radius:4px 4px 0 0;height:40px;"></div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">Mon</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:28px;background:#6c63ff;border-radius:4px 4px 0 0;height:70px;"></div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">Tue</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:28px;background:#ede9ff;border-radius:4px 4px 0 0;height:50px;"></div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">Wed</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:28px;background:#6c63ff;border-radius:4px 4px 0 0;height:90px;"></div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">Thu</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:28px;background:#ede9ff;border-radius:4px 4px 0 0;height:35px;"></div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">Fri</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:28px;background:#6c63ff;border-radius:4px 4px 0 0;height:60px;"></div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">Sat</div></div>
+                      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="width:28px;background:#6c63ff;border-radius:4px 4px 0 0;height:80px;"></div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">Sun</div></div>
+                    </div>
+                    <div style="margin-top:10px;font-size:12px;color:#aaa;text-align:center;font-family:var(--mono);">Best day: Thursday · 48 cards</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Dashboard</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Study Streak (FR-37)</strong>Streak counter from User.studyStreak. Resets if user misses a day. Optional push/email reminder at 8 PM.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Stats (FR-38–40)</strong>Cards mastered, decks studied, time, and battles loaded from GET /api/sessions/stats. Aggregated by MongoDB.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Progress Bars (FR-38)</strong>Per-deck mastery % derived from cards marked "Known" in past sessions vs. total card count.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Activity Chart (FR-40)</strong>Built with Recharts or Chart.js. Shows cards reviewed per day for the past 7 days from session history.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           05 · BROWSE DECKS
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-browse">
+        <div class="screen-container">
+          <div class="screen-label">05 — Browse Decks · /browse</div>
+          <div class="web-frame lg">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/browse</div>
+            </div>
+            <div class="app-nav">
+              <div class="app-nav-logo">⚡ FlashMind</div>
+              <div class="app-nav-link">Dashboard</div>
+              <div class="app-nav-link active">Browse</div>
+              <div class="app-nav-link">My Decks</div>
+              <div class="app-nav-right">
+                <div class="app-nav-avatar">👤</div>
+              </div>
+            </div>
+            <div style="background:#f5f5f0;padding:24px;">
+              <!-- Search + filters -->
+              <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;">
+                <div style="flex:1;background:#fff;border:1.5px solid #e0e0dc;border-radius:10px;padding:10px 14px;font-size:13px;color:#bbb;">🔍 Search decks by title, topic, or tag...</div>
+                <div class="chip active">All</div>
+                <div class="chip">📐 Math</div>
+                <div class="chip">🧬 Science</div>
+                <div class="chip">📖 History</div>
+                <div class="chip">💻 IT</div>
+                <div class="chip">🌏 Filipino</div>
+              </div>
+              <!-- Sort bar -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div style="font-size:13px;color:#888;"><strong style="color:#1a1a2e;">342</strong> public decks</div>
+                <div style="background:#fff;border:1px solid #e0e0dc;border-radius:8px;padding:6px 12px;font-size:12px;color:#555;cursor:pointer;">Sort: Most Popular ▾</div>
+              </div>
+              <!-- Deck grid -->
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+                <div class="deck-card">
+                  <div class="deck-cover" style="background:linear-gradient(135deg,#ede9ff,#d4cfff);">📐</div>
+                  <div class="deck-body">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;"><div class="deck-title">Calculus — Limits & Derivatives</div></div>
+                    <div class="deck-meta">48 cards · ⭐ 4.8 · by @mathpro</div>
+                    <div style="margin-top:8px;display:flex;gap:6px;">
+                      <span class="badge badge-purple">Math</span>
+                      <span class="badge badge-gray">#calculus</span>
+                    </div>
+                    <div style="margin-top:10px;display:flex;gap:6px;">
+                      <div style="flex:1;background:#6c63ff;color:#fff;border-radius:8px;padding:7px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;">Study</div>
+                      <div style="background:#f5f5f0;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;" title="Copy to library">📋</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="deck-card">
+                  <div class="deck-cover" style="background:linear-gradient(135deg,#e6fdf6,#b2f0dc);">🧬</div>
+                  <div class="deck-body">
+                    <div class="deck-title">Cell Biology Essentials</div>
+                    <div class="deck-meta">32 cards · ⭐ 4.6 · by @sciencegirl</div>
+                    <div style="margin-top:8px;"><span class="badge badge-green">Science</span></div>
+                    <div style="margin-top:10px;display:flex;gap:6px;">
+                      <div style="flex:1;background:#6c63ff;color:#fff;border-radius:8px;padding:7px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;">Study</div>
+                      <div style="background:#f5f5f0;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;">📋</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="deck-card">
+                  <div class="deck-cover" style="background:linear-gradient(135deg,#e6f0ff,#bbd4ff);">💻</div>
+                  <div class="deck-body">
+                    <div class="deck-title">React Hooks Mastery</div>
+                    <div class="deck-meta">25 cards · ⭐ 4.9 · by @devguru</div>
+                    <div style="margin-top:8px;"><span class="badge badge-blue">IT</span></div>
+                    <div style="margin-top:10px;display:flex;gap:6px;">
+                      <div style="flex:1;background:#6c63ff;color:#fff;border-radius:8px;padding:7px;text-align:center;font-size:12px;font-weight:700;cursor:pointer;">Study</div>
+                      <div style="background:#f5f5f0;border-radius:8px;padding:7px 10px;font-size:12px;cursor:pointer;">📋</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Browse Decks</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Search + Filter (FR-15)</strong>Query hits GET /api/decks?q=&category=&sort=. Returns only isPublic:true decks. Results update as user types (debounced).</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Copy Deck (FR-16)</strong>📋 button calls POST /api/decks/:id/copy — duplicates all deck metadata and cards into the user's own library.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Sort Options</strong>Sort by Most Popular (session count), Newest, Rating, or Card Count. Helps surface quality content.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Guest View</strong>Guests (no JWT) can browse and view decks but Study and Copy buttons redirect to /login.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           06 · CREATE DECK
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-create">
+        <div class="screen-container">
+          <div class="screen-label">06 — Create Deck · /decks/new</div>
+          <div class="web-frame md">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/decks/new</div>
+            </div>
+            <div class="app-nav">
+              <div class="app-nav-logo">⚡ FlashMind</div>
+              <div class="app-nav-link">Dashboard</div>
+              <div class="app-nav-link">Browse</div>
+              <div class="app-nav-link active">My Decks</div>
+              <div class="app-nav-right"><div class="app-nav-avatar">👤</div></div>
+            </div>
+            <div style="background:#f5f5f0;padding:24px;">
+              <div style="display:flex;gap:24px;align-items:flex-start;">
+                <!-- Left: deck info -->
+                <div style="flex:1;">
+                  <div style="font-size:18px;font-weight:800;color:#1a1a2e;margin-bottom:16px;">Create New Deck</div>
+                  <div class="card" style="margin-bottom:14px;">
+                    <!-- Cover upload -->
+                    <div class="upload-zone" style="height:100px;margin-bottom:16px;border-radius:10px;">
+                      <span style="font-size:24px;opacity:.4;">🖼️</span>
+                      <span style="font-size:11px;color:#aaa;font-family:var(--mono);">Click to upload cover image · max 5MB</span>
+                    </div>
+                    <label class="f-label">DECK TITLE *</label>
+                    <div class="f-input">Calculus — Limits & Derivatives</div>
+                    <label class="f-label">DESCRIPTION</label>
+                    <div class="f-input textarea ph">What is this deck about?</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+                      <div>
+                        <label class="f-label">CATEGORY</label>
+                        <div class="f-input" style="margin-bottom:0;">📐 Math</div>
+                      </div>
+                      <div>
+                        <label class="f-label">VISIBILITY</label>
+                        <div style="display:flex;gap:6px;">
+                          <div style="flex:1;background:#1a1a2e;color:#fff;border-radius:8px;padding:9px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;">🌐 Public</div>
+                          <div style="flex:1;background:#f5f5f0;border:1.5px solid #e0e0dc;color:#888;border-radius:8px;padding:9px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;">🔒 Private</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:10px;">
+                    <div style="flex:1;background:#6c63ff;color:#fff;border-radius:10px;padding:12px;text-align:center;font-size:13px;font-weight:700;cursor:pointer;">Save Deck</div>
+                    <div style="background:#f5f5f0;border:1.5px solid #e0e0dc;color:#888;border-radius:10px;padding:12px 20px;font-size:13px;cursor:pointer;">Cancel</div>
+                  </div>
+                </div>
+                <!-- Right: card editor -->
+                <div style="width:320px;flex-shrink:0;">
+                  <div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:10px;">Flashcards <span class="badge badge-gray">3 cards</span></div>
+                  <!-- Card 1 (filled) -->
+                  <div class="card" style="margin-bottom:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                      <div style="font-size:11px;font-weight:700;color:#6c63ff;font-family:var(--mono);">CARD 1</div>
+                      <div style="font-size:13px;color:#aaa;cursor:pointer;">✕</div>
+                    </div>
+                    <label class="f-label">FRONT (TERM)</label>
+                    <div class="f-input" style="margin-bottom:8px;">What is a limit?</div>
+                    <label class="f-label">BACK (DEFINITION)</label>
+                    <div class="f-input" style="margin-bottom:8px;">The value a function approaches as input approaches a value.</div>
+                    <div style="display:flex;gap:6px;">
+                      <div class="upload-zone" style="flex:1;height:36px;border-radius:8px;flex-direction:row;gap:4px;font-size:10px;color:#aaa;">📷 Front image</div>
+                      <div class="upload-zone" style="flex:1;height:36px;border-radius:8px;flex-direction:row;gap:4px;font-size:10px;color:#aaa;">📷 Back image</div>
+                    </div>
+                  </div>
+                  <!-- Card 2 (empty) -->
+                  <div class="card" style="margin-bottom:8px;opacity:.6;">
+                    <div style="font-size:11px;font-weight:700;color:#aaa;font-family:var(--mono);margin-bottom:8px;">CARD 2</div>
+                    <div class="f-input ph" style="margin-bottom:8px;">Term / front...</div>
+                    <div class="f-input ph">Definition / back...</div>
+                  </div>
+                  <!-- Add card btn -->
+                  <div style="border:2px dashed #ccc;border-radius:10px;padding:12px;text-align:center;cursor:pointer;color:#aaa;font-size:13px;font-weight:600;">+ Add Card</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Create Deck</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Cover Upload (FR-10, FR-18)</strong>Drag & drop or click. POST /api/upload/deck-cover via Multer. Max 5MB, JPG/PNG/WEBP validated server-side.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Card Image Upload (FR-13, FR-19)</strong>Each card can have an optional front and back image. Uploads to Cloudinary via POST /api/upload/card-image.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Inline Card Editor</strong>Side panel allows adding multiple cards before saving. Cards saved together in one POST /api/decks call.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Visibility (FR-09)</strong>Public = appears in browse. Private = owner-only. Can be changed anytime from deck settings via PUT /api/decks/:id.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           07 · DECK DETAIL
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-deckdetail">
+        <div class="screen-container">
+          <div class="screen-label">07 — Deck Detail · /decks/:id</div>
+          <div class="web-frame lg">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/decks/calculus-limits</div>
+            </div>
+            <div class="app-nav">
+              <div class="app-nav-logo">⚡ FlashMind</div>
+              <div class="app-nav-link">Dashboard</div>
+              <div class="app-nav-link active">Browse</div>
+              <div class="app-nav-link">My Decks</div>
+              <div class="app-nav-right"><div class="app-nav-avatar">👤</div></div>
+            </div>
+            <div style="background:#f5f5f0;padding:24px;">
+              <!-- Deck hero -->
+              <div style="background:linear-gradient(135deg,#1a1a2e,#2d2a55);border-radius:14px;padding:28px 32px;display:flex;align-items:center;gap:24px;margin-bottom:20px;">
+                <div style="width:80px;height:80px;border-radius:14px;background:linear-gradient(135deg,#6c63ff,#4facfe);display:flex;align-items:center;justify-content:center;font-size:36px;flex-shrink:0;">📐</div>
+                <div style="flex:1;">
+                  <div style="font-size:24px;font-weight:900;color:#fff;margin-bottom:4px;">Calculus — Limits & Derivatives</div>
+                  <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:10px;">by @mathpro · 48 cards · <span class="badge badge-purple">Math</span></div>
+                  <div style="font-size:13px;color:rgba(255,255,255,.6);">Covers limits, derivative rules, and application problems. Perfect for Calculus I students.</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+                  <div style="background:#6c63ff;color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;">📋 Copy Deck</div>
+                  <div style="background:rgba(255,255,255,.1);color:#fff;border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;text-align:center;">✏️ Edit</div>
+                </div>
+              </div>
+              <!-- Mode selector + card list -->
+              <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px;">
+                <!-- Study modes -->
+                <div>
+                  <div style="font-size:13px;font-weight:700;color:#1a1a2e;margin-bottom:10px;">Choose Study Mode</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+                    <div class="mode-tile" style="background:#ede9ff;"><div class="mode-icon">🃏</div><div class="mode-label" style="color:#6c63ff;">Flashcard</div></div>
+                    <div class="mode-tile" style="background:#e6fdf6;"><div class="mode-icon">📝</div><div class="mode-label" style="color:#1a8a60;">Quiz</div></div>
+                  </div>
+                  <!-- Mastery progress -->
+                  <div class="card">
+                    <div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:10px;">Your Progress</div>
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;"><span style="color:#555;">Mastery</span><span style="color:#6c63ff;font-weight:700;font-family:var(--mono);">72%</span></div>
+                    <div class="prog-bar" style="height:10px;margin-bottom:10px;"><div class="prog-fill" style="width:72%;background:#6c63ff;"></div></div>
+                    <div style="display:flex;gap:8px;">
+                      <div style="flex:1;background:#e6fdf6;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#1a8a60;">34</div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">KNOWN</div></div>
+                      <div style="flex:1;background:#fff0f3;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:16px;font-weight:800;color:#e53e3e;">14</div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">REVIEW</div></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Card list -->
+                <div class="tbl-card">
+                  <div class="tbl-hd"><div class="tbl-title">Cards Preview</div><span style="font-size:12px;color:#aaa;font-family:var(--mono);">48 total</span></div>
+                  <div class="tbl">
+                    <table>
+                      <thead><tr><th>#</th><th>Front (Term)</th><th>Back (Definition)</th><th>Status</th></tr></thead>
+                      <tbody>
+                        <tr><td style="color:#aaa;">1</td><td><strong>What is a limit?</strong></td><td style="color:#888;font-size:11px;">Value a function approaches...</td><td><span class="badge badge-green">Known ✓</span></td></tr>
+                        <tr><td style="color:#aaa;">2</td><td><strong>Power Rule formula?</strong></td><td style="color:#888;font-size:11px;">d/dx[xⁿ] = nxⁿ⁻¹</td><td><span class="badge badge-red">Review</span></td></tr>
+                        <tr><td style="color:#aaa;">3</td><td><strong>Chain Rule?</strong></td><td style="color:#888;font-size:11px;">f'(g(x)) · g'(x)</td><td><span class="badge badge-red">Review</span></td></tr>
+                        <tr><td style="color:#aaa;">4</td><td><strong>Derivative of sin(x)?</strong></td><td style="color:#888;font-size:11px;">cos(x)</td><td><span class="badge badge-green">Known ✓</span></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Deck Detail</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>API (FR-08)</strong>GET /api/decks/:id returns deck metadata + full cards array in a single response. Cards rendered in the preview table.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Mode Launcher</strong>Clicking a study mode tile navigates to /study/:deckId?mode=flashcard or ?mode=quiz. Mode param determines the component rendered.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Owner Controls (FR-14)</strong>Edit and Delete buttons only visible when JWT user ID matches deck.owner. Non-owners see Copy Deck instead.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Progress (FR-38)</strong>Known/Review counts from the user's most recent study session on this deck, fetched via GET /api/sessions/me.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           08 · FLASHCARD MODE
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-flashcard">
+        <div class="screen-container">
+          <div class="screen-label">08 — Flashcard Mode · /study/:id?mode=flashcard</div>
+          <div class="web-frame md">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/study/calculus?mode=flashcard</div>
+            </div>
+            <!-- Minimal top bar for study mode -->
+            <div style="background:#1a1a2e;padding:0 24px;height:48px;display:flex;align-items:center;gap:16px;">
+              <div style="color:rgba(255,255,255,.5);cursor:pointer;font-size:13px;">← Back to Deck</div>
+              <div style="font-size:13px;font-weight:700;color:#fff;flex:1;text-align:center;">📐 Calculus — Limits · Flashcard Mode</div>
+              <div style="font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.5);">CARD 3 / 48</div>
+            </div>
+            <!-- Progress -->
+            <div style="height:5px;background:#2a2a45;"><div style="height:100%;width:6%;background:#6c63ff;"></div></div>
+            <div style="background:#f5f5f0;padding:32px 48px;display:flex;flex-direction:column;align-items:center;gap:20px;">
+              <!-- Mastery bar -->
+              <div style="display:flex;justify-content:space-between;width:100%;font-size:12px;">
+                <span style="color:#aaa;">Known: <strong style="color:#2dd4a0;">2</strong></span>
+                <span style="color:#aaa;">Still Learning: <strong style="color:#ff4d6d;">1</strong></span>
+                <span style="color:#aaa;">Remaining: <strong style="color:#1a1a2e;">45</strong></span>
+              </div>
+              <!-- Flip card -->
+              <div style="width:100%;max-width:520px;">
+                <div class="flip-front" style="margin-bottom:14px;cursor:pointer;">
+                  <div style="font-size:11px;letter-spacing:.12em;opacity:.7;margin-bottom:12px;font-family:var(--mono);">TERM — Click to flip</div>
+                  <div style="font-size:26px;font-weight:800;line-height:1.3;">What is the Chain Rule?</div>
+                  <div style="margin-top:16px;font-size:12px;opacity:.5;font-family:var(--mono);">↕ Space or click to flip</div>
+                </div>
+                <div class="flip-back" style="margin-bottom:16px;">
+                  <div style="font-size:11px;letter-spacing:.12em;color:#6c63ff;margin-bottom:10px;font-family:var(--mono);">DEFINITION</div>
+                  <div style="font-size:16px;color:#333;line-height:1.6;">If y = f(g(x)), then dy/dx = f'(g(x)) · g'(x).<br>Used to differentiate <strong>composite functions</strong>.</div>
+                </div>
+                <!-- Known / Still learning buttons -->
+                <div style="display:flex;gap:12px;">
+                  <div style="flex:1;background:#fff0f3;border:2px solid #ff4d6d;border-radius:12px;padding:14px;text-align:center;cursor:pointer;">
+                    <div style="font-size:22px;">😕</div>
+                    <div style="font-size:13px;font-weight:700;color:#e53e3e;margin-top:4px;">Still Learning</div>
+                    <div style="font-size:10px;color:#aaa;font-family:var(--mono);">← Arrow key</div>
+                  </div>
+                  <div style="flex:1;background:#e6fdf6;border:2px solid #2dd4a0;border-radius:12px;padding:14px;text-align:center;cursor:pointer;">
+                    <div style="font-size:22px;">😊</div>
+                    <div style="font-size:13px;font-weight:700;color:#1a8a60;margin-top:4px;">Got It!</div>
+                    <div style="font-size:10px;color:#aaa;font-family:var(--mono);">→ Arrow key</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Flashcard Mode</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Card Flip (FR-23)</strong>CSS 3D flip animation on click or Spacebar. Front shows term, back reveals definition. Keyboard-friendly (← → arrows).</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Known / Still Learning (FR-24)</strong>Self-marking stored client-side as user progresses. On completion, session data POSTed to /api/sessions with mode="flashcard".</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Image Support (FR-13)</strong>If Card.frontImage or backImage is set, image renders above the text on the corresponding card face.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Minimal UI</strong>Full-focus study mode — navbar stripped down to just a back link and card counter. No distractions.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           09 · QUIZ MODE
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-quiz">
+        <div class="screen-container">
+          <div class="screen-label">09 — Quiz Mode · /study/:id?mode=quiz</div>
+          <div class="web-frame md">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/study/calculus?mode=quiz</div>
+            </div>
+            <div style="background:#1a1a2e;padding:0 24px;height:48px;display:flex;align-items:center;gap:16px;">
+              <div style="color:rgba(255,255,255,.5);cursor:pointer;font-size:13px;">← Exit</div>
+              <div style="font-size:13px;font-weight:700;color:#fff;flex:1;text-align:center;">📝 Quiz Mode — Calculus</div>
+              <div style="background:#febc2e;color:#1a1a2e;border-radius:8px;padding:4px 12px;font-size:12px;font-weight:800;font-family:var(--mono);">⏱ 0:28</div>
+            </div>
+            <div style="height:5px;background:#2a2a45;"><div style="height:100%;width:25%;background:#febc2e;"></div></div>
+            <div style="background:#f5f5f0;padding:28px 48px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <div style="font-size:13px;color:#aaa;font-family:var(--mono);">QUESTION 5 OF 20</div>
+                <span class="badge badge-green">Score: 4 / 4 ✓</span>
+              </div>
+              <!-- Question card -->
+              <div style="background:#fff;border-radius:14px;padding:24px;margin-bottom:18px;border:1px solid #e8e8e4;text-align:center;">
+                <div style="font-size:18px;font-weight:800;color:#1a1a2e;line-height:1.4;">Which rule is used to differentiate a product of two functions?</div>
+              </div>
+              <!-- Options grid -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div class="quiz-opt correct">A. Product Rule <span style="float:right;">✓</span></div>
+                <div class="quiz-opt">B. Chain Rule</div>
+                <div class="quiz-opt wrong">C. Quotient Rule <span style="float:right;font-size:11px;">(your answer)</span></div>
+                <div class="quiz-opt">D. Power Rule</div>
+              </div>
+              <div style="margin-top:16px;background:#e6fdf6;border-radius:10px;padding:12px 16px;font-size:13px;color:#1a8a60;"><strong>Explanation:</strong> The Product Rule states that d/dx[f·g] = f'g + fg'. Used when differentiating two multiplied functions.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Quiz Mode</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Auto-generated MCQ (FR-25)</strong>Server picks 3 wrong answers from other cards in same deck. Shuffled before sending. No duplicates per session.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Instant Feedback</strong>Correct = green, user's wrong selection = red. Explanation shown below options after answering. Next button advances.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Timer (FR-30)</strong>30-second countdown per question. Timer turns yellow at 10s, red at 5s. Unanswered = counted wrong automatically.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>2-column layout</strong>Options displayed in a 2×2 grid for faster scanning on desktop. Keyboard shortcut: A/B/C/D keys for quick selection.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           [REMOVED] Match Mode & Live Battle
+      ══════════════════════════════════════════ -->
+
+      <!-- ══════════════════════════════════════════
+           10 · PROFILE
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-profile">
+        <div class="screen-container">
+          <div class="screen-label">12 — My Profile · /profile</div>
+          <div class="web-frame lg">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/profile</div>
+            </div>
+            <div class="app-nav">
+              <div class="app-nav-logo">⚡ FlashMind</div>
+              <div class="app-nav-link">Dashboard</div>
+              <div class="app-nav-link">Browse</div>
+              <div class="app-nav-link">My Decks</div>
+              <div class="app-nav-right"><div class="app-nav-avatar" style="border:2px solid #6c63ff;">👤</div></div>
+            </div>
+            <div style="background:#f5f5f0;padding:24px;">
+              <div style="display:grid;grid-template-columns:280px 1fr;gap:20px;">
+                <!-- Left: profile card -->
+                <div>
+                  <div class="card" style="text-align:center;margin-bottom:14px;">
+                    <div style="position:relative;display:inline-block;margin-bottom:12px;">
+                      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#4facfe);display:flex;align-items:center;justify-content:center;font-size:34px;border:3px solid rgba(108,99,255,.3);">👤</div>
+                      <div class="upload-zone" style="position:absolute;bottom:-2px;right:-2px;width:26px;height:26px;border-radius:50%;border:2px solid #fff;cursor:pointer;">📷</div>
+                    </div>
+                    <div style="font-size:18px;font-weight:800;color:#1a1a2e;">Juan dela Cruz</div>
+                    <div style="font-size:12px;color:#aaa;margin-bottom:10px;">@juandc · Student</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;">
+                      <span class="badge badge-purple">🔥 7 Day Streak</span>
+                      <span class="badge badge-green">128 Mastered</span>
+                    </div>
+                    <div style="border-top:1px solid #eee;padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:0;">
+                      <div style="text-align:center;"><div style="font-size:18px;font-weight:800;color:#6c63ff;">12</div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">DECKS</div></div>
+                      <div style="text-align:center;border-left:1px solid #eee;"><div style="font-size:18px;font-weight:800;color:#2dd4a0;">47</div><div style="font-size:9px;color:#aaa;font-family:var(--mono);">SESSIONS</div></div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div style="font-size:12px;font-weight:700;color:#1a1a2e;margin-bottom:10px;">Account Settings</div>
+                    <div style="font-size:12px;color:#555;border-bottom:1px solid #f0f0ec;padding-bottom:8px;margin-bottom:8px;cursor:pointer;">✏️ Edit Profile</div>
+                    <div style="font-size:12px;color:#555;border-bottom:1px solid #f0f0ec;padding-bottom:8px;margin-bottom:8px;cursor:pointer;">🔒 Change Password</div>
+                    <div style="font-size:12px;color:#e53e3e;cursor:pointer;">🚪 Sign Out</div>
+                  </div>
+                </div>
+                <!-- Right: decks + history -->
+                <div style="display:flex;flex-direction:column;gap:14px;">
+                  <!-- My decks -->
+                  <div class="tbl-card">
+                    <div class="tbl-hd"><div class="tbl-title">My Decks</div><div style="background:#6c63ff;color:#fff;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;">+ New Deck</div></div>
+                    <div class="tbl">
+                      <table>
+                        <thead><tr><th>Deck</th><th>Cards</th><th>Visibility</th><th>Progress</th><th></th></tr></thead>
+                        <tbody>
+                          <tr><td><strong>📐 Calculus Limits</strong></td><td>48</td><td><span class="badge badge-green">Public</span></td><td><div class="prog-bar" style="width:120px;"><div class="prog-fill" style="width:72%;background:#6c63ff;"></div></div></td><td><span style="color:#6c63ff;cursor:pointer;font-size:11px;font-weight:600;">Manage</span></td></tr>
+                          <tr><td><strong>🔬 Physics Notes</strong></td><td>22</td><td><span class="badge badge-red">Private</span></td><td><div class="prog-bar" style="width:120px;"><div class="prog-fill" style="width:30%;background:#aaa;"></div></div></td><td><span style="color:#6c63ff;cursor:pointer;font-size:11px;font-weight:600;">Manage</span></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <!-- Study history -->
+                  <div class="tbl-card">
+                    <div class="tbl-hd"><div class="tbl-title">Study History</div></div>
+                    <div class="tbl">
+                      <table>
+                        <thead><tr><th>Date</th><th>Deck</th><th>Mode</th><th>Score</th><th>Time</th></tr></thead>
+                        <tbody>
+                          <tr><td style="color:#aaa;font-family:var(--mono);font-size:10px;">Mar 3, 2026</td><td>Calculus Limits</td><td><span class="badge badge-purple">Flashcard</span></td><td style="color:#2dd4a0;font-weight:700;">—</td><td style="font-family:var(--mono);font-size:11px;">8:24</td></tr>
+                          <tr><td style="color:#aaa;font-family:var(--mono);font-size:10px;">Mar 2, 2026</td><td>Cell Biology</td><td><span class="badge badge-green">Quiz</span></td><td style="color:#2dd4a0;font-weight:700;">18/20</td><td style="font-family:var(--mono);font-size:11px;">5:12</td></tr>
+                          <tr><td style="color:#aaa;font-family:var(--mono);font-size:10px;">Mar 1, 2026</td><td>Calculus Limits</td><td><span class="badge badge-purple">Flashcard</span></td><td style="color:#aaa;font-weight:700;">—</td><td style="font-family:var(--mono);font-size:11px;">6:10</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Profile</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Avatar Upload (FR-06, FR-17)</strong>Camera icon opens file picker. PUT /api/auth/profile with multipart form data. New Cloudinary URL saved to User.avatar.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Stats (FR-39)</strong>Decks, sessions, battles won from GET /api/sessions/stats. Streak from User.studyStreak updated server-side daily.</div></div>
+          <div class="ann-item"><div class="ann-text"><strong>Deck Management (FR-14)</strong>"Manage" opens an inline edit/delete modal. Visibility toggle updates via PUT /api/decks/:id without full page reload.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Session History (FR-41)</strong>Loaded via GET /api/sessions/me. Shows mode, deck, score, and time per session. Paginated for long histories.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           13 · ADMIN DASHBOARD
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-admin">
+        <div class="screen-container">
+          <div class="screen-label">13 — Admin Dashboard · /admin</div>
+          <div class="web-frame lg">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/admin</div>
+            </div>
+            <div class="inner-layout">
+              <div class="inner-sidebar">
+                <div class="inner-sidebar-logo">
+                  <div class="inner-sidebar-logo-name">⚡ FlashMind</div>
+                  <div class="inner-sidebar-logo-sub">Admin Panel</div>
+                </div>
+                <div class="inner-nav active">📊 Dashboard</div>
+                <div class="inner-nav">📚 Decks</div>
+                <div class="inner-nav">👥 Users</div>
+                <div class="inner-nav">📋 Sessions</div>
+                <div class="inner-nav" style="margin-top:auto;">⚙️ Settings</div>
+                <div style="padding:12px 14px;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:8px;margin-top:8px;">
+                  <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#4facfe);display:flex;align-items:center;justify-content:center;font-size:13px;">👤</div>
+                  <div><div style="font-size:10px;font-weight:700;color:#fff;">Admin</div><div style="font-size:9px;color:rgba(255,255,255,.3);">admin@flashmind.app</div></div>
+                </div>
+              </div>
+              <div class="inner-main">
+                <div class="inner-topbar">
+                  <div class="inner-topbar-title">Overview Dashboard</div>
+                  <div style="font-size:11px;color:#aaa;font-family:var(--mono);">March 2026</div>
+                  <div style="background:#6c63ff;color:#fff;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;">+ Announcement</div>
+                </div>
+                <div class="inner-content">
+                  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+                    <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value">1,248</div><div class="stat-sub">↑ +42 this week</div></div>
+                    <div class="stat-card"><div class="stat-label">Public Decks</div><div class="stat-value" style="color:#6c63ff;">342</div><div class="stat-sub">↑ +18 this week</div></div>
+                    <div class="stat-card"><div class="stat-label">Study Sessions</div><div class="stat-value" style="color:#2dd4a0;">8,921</div><div class="stat-sub">↑ +563 today</div></div>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <!-- New users -->
+                    <div class="tbl-card">
+                      <div class="tbl-hd"><div class="tbl-title">Recent Registrations</div><span style="font-size:12px;color:#6c63ff;cursor:pointer;font-weight:600;">View all →</span></div>
+                      <div class="tbl">
+                        <table>
+                          <thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead>
+                          <tbody>
+                            <tr><td><strong>Juan dela Cruz</strong><div style="font-size:10px;color:#aaa;">@juandc</div></td><td><span class="badge badge-blue">Student</span></td><td style="font-family:var(--mono);font-size:10px;color:#aaa;">Mar 1</td></tr>
+                            <tr><td><strong>Maria Santos</strong><div style="font-size:10px;color:#aaa;">@mariasantos</div></td><td><span class="badge badge-purple">Creator</span></td><td style="font-family:var(--mono);font-size:10px;color:#aaa;">Feb 28</td></tr>
+                            <tr><td><strong>Pedro Reyes</strong><div style="font-size:10px;color:#aaa;">@preyes</div></td><td><span class="badge badge-blue">Student</span></td><td style="font-family:var(--mono);font-size:10px;color:#aaa;">Feb 27</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <!-- Flagged content -->
+                    <div class="tbl-card">
+                      <div class="tbl-hd"><div class="tbl-title">Flagged Content</div><span class="badge badge-red">2 pending</span></div>
+                      <div style="padding:10px 14px;display:flex;flex-direction:column;gap:8px;">
+                        <div style="background:#fff8f8;border:1px solid #ffd0d8;border-left:3px solid #ff4d6d;border-radius:8px;padding:10px 12px;">
+                          <div style="font-size:12px;font-weight:700;color:#1a1a2e;">🚩 "Suspicious Deck"</div>
+                          <div style="font-size:10px;color:#aaa;margin-top:2px;">Reported by 3 users · Reason: Spam</div>
+                          <div style="display:flex;gap:6px;margin-top:6px;"><span style="color:#6c63ff;font-size:11px;font-weight:600;cursor:pointer;">Review</span><span style="color:#e53e3e;font-size:11px;font-weight:600;cursor:pointer;">Remove</span></div>
+                        </div>
+                        <div style="background:#fff8f8;border:1px solid #ffd0d8;border-left:3px solid #ff4d6d;border-radius:8px;padding:10px 12px;">
+                          <div style="font-size:12px;font-weight:700;color:#1a1a2e;">🚩 User @spam.account</div>
+                          <div style="font-size:10px;color:#aaa;margin-top:2px;">Repeated spam reports · 5 complaints</div>
+                          <div style="display:flex;gap:6px;margin-top:6px;"><span style="color:#6c63ff;font-size:11px;font-weight:600;cursor:pointer;">Suspend</span><span style="color:#e53e3e;font-size:11px;font-weight:600;cursor:pointer;">Ban</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="annotations">
+          <div class="ann-title">Admin Dashboard</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Role Guard (FR-07)</strong>Admin routes protected by role middleware. JWT must contain role:"admin" or server returns 403. Non-admins can't access /admin/*.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Platform Stats</strong>Total users, public decks, and study sessions fetched from admin aggregate endpoints. Refreshed every 60s.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Flagged Content</strong>Users can report decks. Flagged items appear here for admin review. Admin can Review (view), Remove (delete), or Dismiss.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Recent Registrations</strong>Latest user sign-ups shown with role and join date. Quick Manage link opens the full user record.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           14 · ADMIN DECK MANAGEMENT
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-admindecks">
+        <div class="screen-container">
+          <div class="screen-label">14 — Admin Deck Management · /admin/decks</div>
+          <div class="web-frame lg">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/admin/decks</div>
+            </div>
+            <div class="inner-layout">
+              <div class="inner-sidebar">
+                <div class="inner-sidebar-logo"><div class="inner-sidebar-logo-name">⚡ FlashMind</div><div class="inner-sidebar-logo-sub">Admin Panel</div></div>
+                <div class="inner-nav">📊 Dashboard</div>
+                <div class="inner-nav active">📚 Decks</div>
+                <div class="inner-nav">👥 Users</div>
+                <div class="inner-nav">📋 Sessions</div>
+              </div>
+              <div class="inner-main">
+                <div class="inner-topbar">
+                  <div class="inner-topbar-title">Deck Management <span style="font-size:12px;color:#aaa;font-weight:400;">· 342 public decks</span></div>
+                  <div style="background:#f4f4f0;border:1px solid #e0e0dc;border-radius:6px;padding:5px 10px;font-size:12px;color:#888;width:180px;">🔍 Search decks...</div>
+                  <div style="display:flex;gap:6px;">
+                    <div style="padding:5px 10px;border-radius:6px;font-size:11px;background:#1a1a2e;color:#fff;cursor:pointer;">All</div>
+                    <div style="padding:5px 10px;border-radius:6px;font-size:11px;border:1px solid #e0e0dc;color:#888;cursor:pointer;">Public</div>
+                    <div style="padding:5px 10px;border-radius:6px;font-size:11px;border:1px solid #e0e0dc;color:#888;cursor:pointer;">🚩 Reported</div>
+                  </div>
+                </div>
+                <div class="inner-content">
+                  <div class="tbl-card">
+                    <div class="tbl">
+                      <table>
+                        <thead><tr><th>Deck Title</th><th>Creator</th><th>Category</th><th>Cards</th><th>Sessions</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                          <tr><td><strong>📐 Calculus Limits</strong></td><td style="color:#aaa;font-size:11px;">@mathpro</td><td><span class="badge badge-purple">Math</span></td><td>48</td><td style="color:#2dd4a0;font-weight:700;">312</td><td><span class="badge badge-green">Active</span></td><td><div style="display:flex;gap:8px;"><span style="color:#6c63ff;cursor:pointer;font-size:11px;font-weight:600;">View</span><span style="color:#e53e3e;cursor:pointer;font-size:11px;font-weight:600;">Remove</span></div></td></tr>
+                          <tr><td><strong>🧬 Cell Biology</strong></td><td style="color:#aaa;font-size:11px;">@sciencegirl</td><td><span class="badge badge-green">Science</span></td><td>32</td><td style="color:#2dd4a0;font-weight:700;">189</td><td><span class="badge badge-green">Active</span></td><td><div style="display:flex;gap:8px;"><span style="color:#6c63ff;cursor:pointer;font-size:11px;font-weight:600;">View</span><span style="color:#e53e3e;cursor:pointer;font-size:11px;font-weight:600;">Remove</span></div></td></tr>
+                          <tr style="background:#fff8f8;"><td><strong>🚩 Suspicious Deck</strong></td><td style="color:#aaa;font-size:11px;">@unknown99</td><td><span class="badge badge-yellow">Other</span></td><td>5</td><td>2</td><td><span class="badge badge-red">Reported</span></td><td><div style="display:flex;gap:8px;"><span style="color:#6c63ff;cursor:pointer;font-size:11px;font-weight:600;">Review</span><span style="color:#e53e3e;cursor:pointer;font-size:11px;font-weight:600;">Remove</span></div></td></tr>
+                          <tr><td><strong>💻 React Hooks</strong></td><td style="color:#aaa;font-size:11px;">@devguru</td><td><span class="badge badge-blue">IT</span></td><td>25</td><td style="color:#2dd4a0;font-weight:700;">445</td><td><span class="badge badge-green">Active</span></td><td><div style="display:flex;gap:8px;"><span style="color:#6c63ff;cursor:pointer;font-size:11px;font-weight:600;">View</span><span style="color:#e53e3e;cursor:pointer;font-size:11px;font-weight:600;">Remove</span></div></td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotations">
+          <div class="ann-title">Admin Deck Mgmt</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Content Moderation</strong>Admin can view and hard-delete any public deck. DELETE /api/admin/decks/:id removes deck, all cards, and any copied versions.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Reported Filter</strong>Filtering by "🚩 Reported" shows flagged decks first. Highlighted in pink rows for fast moderation triage.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Session Count</strong>Sessions column shows how many study sessions used this deck — helps identify popular vs. low-engagement content.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>Search + Filter</strong>Client-side search filters table rows in real-time. Category filter chips reduce results to a specific subject area.</div></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════
+           15 · ADMIN USER MANAGEMENT
+      ══════════════════════════════════════════ -->
+      <div class="screen-view" id="screen-adminusers">
+        <div class="screen-container">
+          <div class="screen-label">15 — Admin User Management · /admin/users</div>
+          <div class="web-frame lg">
+            <div class="web-chrome">
+              <div class="chrome-dot" style="background:#ff5f57"></div>
+              <div class="chrome-dot" style="background:#febc2e"></div>
+              <div class="chrome-dot" style="background:#28c840"></div>
+              <div class="chrome-url">flashmind.app/admin/users</div>
+            </div>
+            <div class="inner-layout">
+              <div class="inner-sidebar">
+                <div class="inner-sidebar-logo"><div class="inner-sidebar-logo-name">⚡ FlashMind</div><div class="inner-sidebar-logo-sub">Admin Panel</div></div>
+                <div class="inner-nav">📊 Dashboard</div>
+                <div class="inner-nav">📚 Decks</div>
+                <div class="inner-nav active">👥 Users</div>
+                <div class="inner-nav">📋 Sessions</div>
+              </div>
+              <div class="inner-main">
+                <div class="inner-topbar">
+                  <div class="inner-topbar-title">User Management <span style="font-size:12px;color:#aaa;font-weight:400;">· 1,248 total</span></div>
+                  <div style="background:#f4f4f0;border:1px solid #e0e0dc;border-radius:6px;padding:5px 10px;font-size:12px;color:#888;width:180px;">🔍 Search users...</div>
+                  <div style="display:flex;gap:6px;">
+                    <div style="padding:5px 10px;border-radius:6px;font-size:11px;background:#1a1a2e;color:#fff;cursor:pointer;">All</div>
+                    <div style="padding:5px 10px;border-radius:6px;font-size:11px;border:1px solid #e0e0dc;color:#888;cursor:pointer;">Students</div>
+                    <div style="padding:5px 10px;border-radius:6px;font-size:11px;border:1px solid #e0e0dc;color:#888;cursor:pointer;">Creators</div>
+                    <div style="padding:5px 10px;border-radius:6px;font-size:11px;border:1px solid #e0e0dc;color:#888;cursor:pointer;">🚫 Suspended</div>
+                  </div>
+                </div>
+                <div class="inner-content">
+                  <div class="tbl-card">
+                    <div class="tbl">
+                      <table>
+                        <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Decks</th><th>Sessions</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                          <tr>
+                            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6c63ff,#4facfe);display:flex;align-items:center;justify-content:center;font-size:12px;">👤</div><strong>Juan dela Cruz</strong></div></td>
+                            <td style="color:#aaa;font-size:11px;">juan@uni.edu</td>
+                            <td><span class="badge badge-blue">Student</span></td>
+                            <td>12</td><td>47</td>
+                            <td style="font-family:var(--mono);font-size:10px;color:#aaa;">Mar 1</td>
+                            <td><span class="badge badge-green">Active</span></td>
+                            <td><div style="display:flex;gap:6px;"><span style="color:#6c63ff;font-size:11px;font-weight:600;cursor:pointer;">Promote</span><span style="color:#e53e3e;font-size:11px;font-weight:600;cursor:pointer;">Suspend</span></div></td>
+                          </tr>
+                          <tr>
+                            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2dd4a0,#2563eb);display:flex;align-items:center;justify-content:center;font-size:12px;">👤</div><strong>Maria Santos</strong></div></td>
+                            <td style="color:#aaa;font-size:11px;">maria@uni.edu</td>
+                            <td><span class="badge badge-purple">Creator</span></td>
+                            <td>34</td><td>213</td>
+                            <td style="font-family:var(--mono);font-size:10px;color:#aaa;">Feb 28</td>
+                            <td><span class="badge badge-green">Active</span></td>
+                            <td><div style="display:flex;gap:6px;"><span style="color:#6c63ff;font-size:11px;font-weight:600;cursor:pointer;">Promote</span><span style="color:#e53e3e;font-size:11px;font-weight:600;cursor:pointer;">Suspend</span></div></td>
+                          </tr>
+                          <tr style="background:#fff8f8;">
+                            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;font-size:12px;">🚫</div><strong style="color:#aaa;">@spam.account</strong></div></td>
+                            <td style="color:#aaa;font-size:11px;">spam@mail.com</td>
+                            <td><span class="badge badge-gray">Student</span></td>
+                            <td>2</td><td>1</td>
+                            <td style="font-family:var(--mono);font-size:10px;color:#aaa;">Mar 3</td>
+                            <td><span class="badge badge-red">Suspended</span></td>
+                            <td><div style="display:flex;gap:6px;"><span style="color:#2dd4a0;font-size:11px;font-weight:600;cursor:pointer;">Restore</span><span style="color:#e53e3e;font-size:11px;font-weight:600;cursor:pointer;">Ban</span></div></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="annotations">
+          <div class="ann-title">Admin User Mgmt</div>
+          <div class="ann-item"><div class="ann-num">1</div><div class="ann-text"><strong>Role Promotion (FR-07)</strong>"Promote" opens a dropdown: Student → Creator → Admin. PUT /api/admin/users/:id/role updates the role field in the User model.</div></div>
+          <div class="ann-item"><div class="ann-num">2</div><div class="ann-text"><strong>Suspend / Ban</strong>Suspend = temporary (user can be restored). Ban = permanent. Suspended users receive 401 on login with a "suspended" message.</div></div>
+          <div class="ann-item"><div class="ann-num">3</div><div class="ann-text"><strong>Search + Filters</strong>Filter by role or status. Real-time search by name or email. "🚫 Suspended" tab shows problem accounts for quick review.</div></div>
+          <div class="ann-item"><div class="ann-num">4</div><div class="ann-text"><strong>User Stats</strong>Decks and sessions columns help identify power users (Creator candidates) and low-activity accounts.</div></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<script>
+const screens = {
+  'landing':    'Landing Page',
+  'login':      'Login',
+  'register':   'Register',
+  'dashboard':  'Dashboard',
+  'browse':     'Browse Decks',
+  'create':     'Create Deck',
+  'deckdetail': 'Deck Detail',
+  'flashcard':  'Flashcard Mode',
+  'quiz':       'Quiz Mode',
+  'profile':    'My Profile',
+  'admin':      'Admin Dashboard',
+  'admindecks': 'Admin — Deck Management',
+  'adminusers': 'Admin — User Management',
+};
+const paths = {
+  'landing':    'screens/landing · /',
+  'login':      'screens/auth/login',
+  'register':   'screens/auth/register',
+  'dashboard':  'screens/dashboard',
+  'browse':     'screens/browse',
+  'create':     'screens/decks/new',
+  'deckdetail': 'screens/decks/:id',
+  'flashcard':  'screens/study?mode=flashcard',
+  'quiz':       'screens/study?mode=quiz',
+  'profile':    'screens/profile',
+  'admin':      'screens/admin/dashboard',
+  'admindecks': 'screens/admin/decks',
+  'adminusers': 'screens/admin/users',
+};
+
+function show(id) {
+  document.querySelectorAll('.screen-view').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const target = document.getElementById('screen-' + id);
+  if (target) target.classList.add('active');
+  const nav = document.querySelector(`[onclick="show('${id}')"]`);
+  if (nav) nav.classList.add('active');
+  document.getElementById('topbar-title').textContent = screens[id] || id;
+  document.getElementById('topbar-path').textContent  = paths[id] || '';
+  document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
