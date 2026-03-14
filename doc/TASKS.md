@@ -85,11 +85,11 @@
 ## 🔵 Sprint 5 — Profile + Admin Screens
 **Branch:** `feat/profile-admin`
 
-- [ ] `ProfilePage.jsx` — shadcn Avatar with camera overlay, streak + mastery badges, 2-col stats, My Decks table, Study History table (mock sessions)
-- [ ] `AdminDashboardPage.jsx` — dark sidebar, 3-col stats row, Recent Registrations table, Flagged Content list
-- [ ] `AdminDecksPage.jsx` — search input, filter tabs (All / Public / Reported), deck table, reported row highlighted pink, Remove button with Dialog confirm
-- [ ] `AdminUsersPage.jsx` — search input, filter tabs (All / Students / Creators / Suspended), user table with role badges, Promote / Suspend / Restore / Ban actions
-- [ ] `src/components/layout/AdminSidebar.jsx` — persistent across all 3 admin screens
+- [x] `ProfilePage.jsx` — shadcn Avatar with camera overlay, streak + mastery badges, 2-col stats, My Decks table, Study History table (mock sessions)
+- [x] `AdminDashboardPage.jsx` — dark sidebar, 3-col stats row, Recent Registrations table, Flagged Content list
+- [x] `AdminDecksPage.jsx` — search input, filter tabs (All / Public / Reported), deck table, reported row highlighted pink, Remove button with Dialog confirm
+- [x] `AdminUsersPage.jsx` — search input, filter tabs (All / Students / Creators / Suspended), user table with role badges, Promote / Suspend / Restore / Ban actions
+- [x] `src/components/layout/AdminSidebar.jsx` — persistent across all 3 admin screens
 
 **Commit:** `feat(profile-admin): profile page and all admin panel screens`
 
