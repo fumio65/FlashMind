@@ -52,15 +52,15 @@
 ## 🟡 Sprint 3 — Core Student Screens
 **Branch:** `feat/decks`
 
-- [ ] `DashboardPage.jsx` — greeting, streak badge, 3-col stats, Recharts bar chart (mock 7-day data), recent decks with Progress bars
-- [ ] `BrowsePage.jsx` — search input (debounced), category chips, 3-col deck grid, sort dropdown, Copy button
-- [ ] `CreateDeckPage.jsx` — two-column form (metadata left, card editor right), cover upload zone, Add Card button, inline card forms
-- [ ] `DeckDetailPage.jsx` — hero banner, 2-tile mode launcher (Flashcard + Quiz), mastery progress card, card preview table
-- [ ] `src/features/decks/components/DeckCard.jsx` — shadcn Card with cover icon, title, meta, badge, Study + Copy buttons
-- [ ] `src/features/dashboard/components/ActivityChart.jsx` — Recharts BarChart, 7-day mock data
-- [ ] `src/features/dashboard/components/StreakCard.jsx` — flame emoji + streak count
-- [ ] `src/hooks/useDebounce.js` — debounce hook for search input (300ms)
-- [ ] Mock deck data array in `src/features/decks/api/` (static JSON for frontend phase)
+- [x] `DashboardPage.jsx` — greeting, streak badge, 3-col stats, Recharts bar chart (mock 7-day data), recent decks with Progress bars
+- [x] `BrowsePage.jsx` — search input (debounced), category chips, 3-col deck grid, sort dropdown, Copy button
+- [x] `CreateDeckPage.jsx` — two-column form (metadata left, card editor right), cover upload zone, Add Card button, inline card forms
+- [x] `DeckDetailPage.jsx` — hero banner, 2-tile mode launcher (Flashcard + Quiz), mastery progress card, card preview table
+- [x] `src/features/decks/components/DeckCard.jsx` — shadcn Card with cover icon, title, meta, badge, Study + Copy buttons
+- [x] `src/features/dashboard/components/ActivityChart.jsx` — Recharts BarChart, 7-day mock data
+- [x] `src/features/dashboard/components/StreakCard.jsx` — flame emoji + streak count
+- [x] `src/hooks/useDebounce.js` — debounce hook for search input (300ms)
+- [x] Mock deck data array in `src/features/decks/api/` (static JSON for frontend phase)
 
 **Commit:** `feat(decks): dashboard, browse, create, and deck detail screens`
 
