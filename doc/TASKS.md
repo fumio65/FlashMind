@@ -9,25 +9,25 @@
 ## 🔴 Sprint 1 — Project Setup
 **Branch:** `feat/setup`
 
-- [ ] `npm create vite@latest flashmind-client -- --template react`
-- [ ] Install Tailwind v4: `npm install tailwindcss @tailwindcss/vite`
-- [ ] Configure `vite.config.js` — add `tailwindcss()` to plugins
-- [ ] Replace `src/index.css` with `@import "tailwindcss";`
-- [ ] Initialize shadcn/ui: `npx shadcn@latest init`
-- [ ] Add shadcn components: `npx shadcn@latest add button card input badge dialog progress table avatar tabs`
-- [ ] Create full feature-based folder structure (see ARCHITECTURE.md)
-- [ ] Install dependencies: `npm install react-router-dom axios zustand react-hook-form zod @hookform/resolvers lucide-react recharts`
-- [ ] Set up `src/lib/axios.js` — base URL + auth interceptor
-- [ ] Set up `src/lib/utils.js` — `cn()` helper
-- [ ] Create `src/features/auth/store/authStore.js` — Zustand store with token + user
-- [ ] Set up `src/app/router.jsx` — all routes with ProtectedRoute + AdminRoute guards
-- [ ] Create `src/app/providers.jsx` — wrap app with providers
-- [ ] Create `src/components/layout/Navbar.jsx`
-- [ ] Create `src/components/layout/AdminSidebar.jsx`
-- [ ] Create `src/components/shared/ProtectedRoute.jsx`
-- [ ] Create `src/components/shared/AdminRoute.jsx`
-- [ ] Push initial commit: `chore: init project with Vite 8, Tailwind v4, shadcn/ui`
-- [ ] Create `dev` branch, push to GitHub
+- [x] `npm create vite@latest flashmind-client -- --template react`
+- [x] Install Tailwind v4: `npm install tailwindcss @tailwindcss/vite`
+- [x] Configure `vite.config.js` — add `tailwindcss()` to plugins
+- [x] Replace `src/index.css` with `@import "tailwindcss";`
+- [x] Initialize shadcn/ui: `npx shadcn@latest init`
+- [x] Add shadcn components: `npx shadcn@latest add button card input badge dialog progress table avatar tabs`
+- [x] Create full feature-based folder structure (see ARCHITECTURE.md)
+- [x] Install dependencies: `npm install react-router-dom axios zustand react-hook-form zod @hookform/resolvers lucide-react recxarts`
+- [x] Set up `src/lib/axios.js` — base URL + auth interceptor
+- [x] Set up `src/lib/utils.js` — `cn()` helper
+- [x] Create `src/features/auth/store/authStore.js` — Zustand store with token + user
+- [x] Set up `src/app/router.jsx` — all routes with ProtectedRoute + AdminRoute guards
+- [x] Create `src/app/providers.jsx` — wrap app with providers
+- [x] Create `src/components/layout/Navbar.jsx`
+- [x] Create `src/components/layout/AdminSidebar.jsx`
+- [x] Create `src/components/shared/ProtectedRoute.jsx`
+- [x] Create `src/components/shared/AdminRoute.jsx`
+- [x] Push initial commit: `chore: init project with Vite 8, Tailwind v4, shadcn/ui`
+- [x] Create `dev` branch, push to GitHub
 
 **Commit:** `chore: project setup and folder structure`
 
@@ -36,14 +36,14 @@
 ## 🟠 Sprint 2 — Auth Screens
 **Branch:** `feat/auth`
 
-- [ ] `LandingPage.jsx` — hero, feature cards (Flashcard Mode, Quiz Mode, Track Progress), stats bar, nav buttons
-- [ ] `LoginPage.jsx` — split layout, React Hook Form, Zod schema (email + password), shadcn Input + Button
-- [ ] `RegisterPage.jsx` — avatar upload control (circular), username + email + password fields, Zod schema
-- [ ] `src/features/auth/hooks/useLogin.js` — form submit handler, mock token store to Zustand
-- [ ] `src/features/auth/hooks/useRegister.js` — form submit handler
-- [ ] Wire mock login (any email/password stores a fake JWT, sets user in Zustand)
-- [ ] Verify ProtectedRoute redirects unauthenticated users to `/login`
-- [ ] Verify AdminRoute redirects non-admin users to `/dashboard`
+- [x] `LandingPage.jsx` — hero, feature cards (Flashcard Mode, Quiz Mode, Track Progress), stats bar, nav buttons
+- [x] `LoginPage.jsx` — split layout, React Hook Form, Zod schema (email + password), shadcn Input + Button
+- [x] `RegisterPage.jsx` — avatar upload control (circular), username + email + password fields, Zod schema
+- [x] `src/features/auth/hooks/useLogin.js` — form submit handler, mock token store to Zustand
+- [x] `src/features/auth/hooks/useRegister.js` — form submit handler
+- [x] Wire mock login (any email/password stores a fake JWT, sets user in Zustand)
+- [x] Verify ProtectedRoute redirects unauthenticated users to `/login`
+- [x] Verify AdminRoute redirects non-admin users to `/dashboard`
 
 **Commit:** `feat(auth): login, register, and protected route setup`
 
