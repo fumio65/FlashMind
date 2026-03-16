@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { FlipCard }   from './FlipCard'
 import { useFlashcardMode, CONFIDENCE_LEVELS, DOT_COLORS } from '../hooks/useFlashcardMode'
 import { getQueueSummary } from '../utils/buildReviewQueue'
 import { Button }     from '@/components/ui/button'
-import { Link }       from 'react-router-dom'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { RotateCcw, ArrowLeft, Info } from 'lucide-react'
 import { cn }         from '@/lib/utils'
 
@@ -12,13 +12,16 @@ export function FlashcardMode({ deck }) {
   const [previousRatings, setPreviousRatings] = useState({})
   const [stamp, setStamp]                     = useState(null)
   const [sessionCount, setSessionCount]       = useState(0)
+  const [showRestartDialog, setShowRestartDialog] = useState(false)
   const navigate                              = useNavigate()
+  const handleConfirmRestartRef               = useRef(null)
 
   const {
     currentCard, currentIndex, isFlipped, flip,
     rate, restart, known, stillLearning, hard,
     avgScore, isComplete, total, uniqueTotal,
     ratings, ratingMap, prevLevel,
+    onNavigateBack, onRestartStudy,
   } = useFlashcardMode(deck.cards, previousRatings)
 
   const summary = getQueueSummary(deck.cards, previousRatings)
@@ -26,10 +29,8 @@ export function FlashcardMode({ deck }) {
   const handleRate = (level) => {
     if (!isFlipped || stamp) return
     setStamp(level)
-    setTimeout(() => {
-      setStamp(null)
-      rate(level.value)
-    }, 600)
+    rate(level.value)
+    setTimeout(() => setStamp(null), 600)
   }
 
   const handleStudyAgain = () => {
@@ -39,7 +40,46 @@ export function FlashcardMode({ deck }) {
     restart(merged)
   }
 
-  // ── Keyboard shortcuts for completion screen ──
+  const handleConfirmRestart = () => {
+    setShowRestartDialog(false)
+    handleStudyAgain()
+  }
+
+  // Always keep ref pointing to latest handleConfirmRestart
+  useEffect(() => {
+    handleConfirmRestartRef.current = handleConfirmRestart
+  })
+
+  // Wire up Esc → close dialog (if open) or back, R → open restart dialog
+  useEffect(() => {
+    onNavigateBack.current = () => {
+      if (showRestartDialog) {
+        setShowRestartDialog(false)
+      } else {
+        navigate(`/decks/${deck._id}`)
+      }
+    }
+    onRestartStudy.current = () => setShowRestartDialog(true)
+  })
+
+  // When restart dialog is open: Esc closes it, R confirms restart
+  useEffect(() => {
+    if (!showRestartDialog) return
+    const handler = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        setShowRestartDialog(false)
+      }
+      if (e.key === 'r' || e.key === 'R') {
+        e.stopPropagation()
+        handleConfirmRestartRef.current?.()
+      }
+    }
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
+  }, [showRestartDialog])
+
+  // Keyboard shortcuts for completion screen
   useEffect(() => {
     if (!isComplete) return
     const handler = (e) => {
@@ -149,11 +189,13 @@ export function FlashcardMode({ deck }) {
   // ── Study screen ──
   return (
     <div className="flex flex-col items-center gap-6 py-8 px-4">
+
       {/* Header */}
       <div className="w-full max-w-2xl flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
           <Link to={`/decks/${deck._id}`}>
             <ArrowLeft className="h-4 w-4 mr-1" />Back
+            <kbd className="ml-1.5 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-60">Esc</kbd>
           </Link>
         </Button>
         <div className="text-center">
@@ -166,8 +208,9 @@ export function FlashcardMode({ deck }) {
             </p>
           )}
         </div>
-        <Button variant="ghost" size="sm" onClick={handleStudyAgain}>
+        <Button variant="ghost" size="sm" onClick={() => setShowRestartDialog(true)}>
           <RotateCcw className="h-4 w-4 mr-1" />Restart
+          <kbd className="ml-1.5 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-60">R</kbd>
         </Button>
       </div>
 
@@ -267,8 +310,65 @@ export function FlashcardMode({ deck }) {
       <p className="text-xs text-muted-foreground">
         <kbd className="px-1.5 py-0.5 bg-muted rounded">Space</kbd> Flip
         {' · '}
-        <kbd className="px-1.5 py-0.5 bg-muted rounded">1–5</kbd> Rate confidence
+        <kbd className="px-1.5 py-0.5 bg-muted rounded">1–5</kbd> Rate
+        {' · '}
+        <kbd className="px-1.5 py-0.5 bg-muted rounded">R</kbd> Restart
+        {' · '}
+        <kbd className="px-1.5 py-0.5 bg-muted rounded">Esc</kbd> Back
       </p>
+
+      {/* Restart confirmation dialog */}
+      <Dialog
+        open={showRestartDialog}
+        onOpenChange={(open) => { if (!open) setShowRestartDialog(false) }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-primary" />
+              Restart Session?
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-2">
+            <p className="text-sm text-muted-foreground mb-4">
+              Your current progress will be used to build a smarter queue for the next round.
+            </p>
+
+            {/* Current progress summary */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-extrabold text-green-400">{known.length}</p>
+                <p className="text-xs text-green-400/80">Known</p>
+              </div>
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-extrabold text-yellow-400">{hard.length}</p>
+                <p className="text-xs text-yellow-400/80">Hard</p>
+              </div>
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-extrabold text-red-400">{stillLearning.length}</p>
+                <p className="text-xs text-red-400/80">Forgot</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              {currentIndex} of {total} cards rated so far
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowRestartDialog(false)}>
+              Keep Going
+              <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-70">Esc</kbd>
+            </Button>
+            <Button onClick={handleConfirmRestart}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Yes, Restart
+              <kbd className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded opacity-70">R</kbd>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         @keyframes stamp {

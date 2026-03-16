@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { buildReviewQueue } from '../utils/buildReviewQueue'
 
 export const CONFIDENCE_LEVELS = [
@@ -32,26 +32,48 @@ export function useFlashcardMode(allCards = [], previousRatings = {}) {
   const [ratings, setRatings]           = useState([])
   const [isComplete, setIsComplete]     = useState(false)
 
+  // Lock ref — prevents any input while transitioning
+  const isLocked = useRef(false)
+
+  // Callback refs for Esc/R shortcuts — set by the component
+  const onNavigateBack   = useRef(null)
+  const onRestartStudy   = useRef(null)
+
   const currentCard = queue[currentIndex]
   const prevRating  = currentCard ? previousRatings[currentCard._id] : null
   const prevLevel   = prevRating ? CONFIDENCE_LEVELS.find((l) => l.value === prevRating) : null
 
-  const flip = useCallback(() => setIsFlipped((f) => !f), [])
+  const flip = useCallback(() => {
+    if (isLocked.current) return
+    setIsFlipped((f) => !f)
+  }, [])
 
   const rate = useCallback((value) => {
-    if (!currentCard) return
+    if (isLocked.current || !currentCard) return
+
+    // Lock immediately — nothing can fire until unlock
+    isLocked.current = true
+
     setRatings((prev) => [...prev, { cardId: currentCard._id, value }])
     setIsFlipped(false)
+
     setTimeout(() => {
-      if (currentIndex + 1 >= queue.length) {
-        setIsComplete(true)
-      } else {
-        setCurrentIndex((i) => i + 1)
-      }
-    }, 150)
-  }, [currentCard, currentIndex, queue.length])
+      setCurrentIndex((i) => {
+        const next = i + 1
+        if (next >= queue.length) {
+          setIsComplete(true)
+        }
+        return next < queue.length ? next : i
+      })
+      // Unlock after transition completes
+      setTimeout(() => {
+        isLocked.current = false
+      }, 100)
+    }, 650)
+  }, [currentCard, queue.length])
 
   const restart = useCallback((newRatingMap = {}) => {
+    isLocked.current = false
     const newQueue = buildReviewQueue(allCards, newRatingMap)
     setQueue(newQueue)
     setCurrentIndex(0)
@@ -60,14 +82,18 @@ export function useFlashcardMode(allCards = [], previousRatings = {}) {
     setIsComplete(false)
   }, [allCards])
 
+  // Keyboard shortcuts for study screen
   useEffect(() => {
     const handler = (e) => {
-      if (e.code === 'Space') { e.preventDefault(); flip() }
+      if (isComplete) return
+      if (e.code === 'Space')            { e.preventDefault(); flip() }
       if (e.key >= '1' && e.key <= '5') rate(Number(e.key))
+      if (e.key === 'Escape')            onNavigateBack.current?.()
+      if (e.key === 'r' || e.key === 'R') onRestartStudy.current?.()
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [flip, rate])
+  }, [flip, rate, isComplete])
 
   const known         = ratings.filter((r) => r.value >= 4)
   const stillLearning = ratings.filter((r) => r.value <= 2)
@@ -85,5 +111,8 @@ export function useFlashcardMode(allCards = [], previousRatings = {}) {
     avgScore, isComplete, prevLevel,
     total: queue.length,
     uniqueTotal: allCards.length,
+    // Expose refs so component can wire up Esc/R callbacks
+    onNavigateBack,
+    onRestartStudy,
   }
 }
