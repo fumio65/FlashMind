@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FlipCard }   from './FlipCard'
 import { useFlashcardMode, CONFIDENCE_LEVELS, DOT_COLORS } from '../hooks/useFlashcardMode'
 import { getQueueSummary } from '../utils/buildReviewQueue'
 import { Button }     from '@/components/ui/button'
 import { Link }       from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { RotateCcw, ArrowLeft, Info } from 'lucide-react'
 import { cn }         from '@/lib/utils'
 
@@ -11,6 +12,7 @@ export function FlashcardMode({ deck }) {
   const [previousRatings, setPreviousRatings] = useState({})
   const [stamp, setStamp]                     = useState(null)
   const [sessionCount, setSessionCount]       = useState(0)
+  const navigate                              = useNavigate()
 
   const {
     currentCard, currentIndex, isFlipped, flip,
@@ -36,6 +38,17 @@ export function FlashcardMode({ deck }) {
     setSessionCount((s) => s + 1)
     restart(merged)
   }
+
+  // ── Keyboard shortcuts for completion screen ──
+  useEffect(() => {
+    if (!isComplete) return
+    const handler = (e) => {
+      if (e.key === 'r' || e.key === 'R') handleStudyAgain()
+      if (e.key === 'Escape')             navigate(`/decks/${deck._id}`)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isComplete, ratingMap])
 
   const progress = Math.round((currentIndex / total) * 100)
 
@@ -115,12 +128,18 @@ export function FlashcardMode({ deck }) {
           </div>
         )}
 
+        {/* Actions */}
         <div className="flex gap-3">
           <Button onClick={handleStudyAgain} variant="outline">
-            <RotateCcw className="h-4 w-4 mr-2" />Study Again
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Study Again
+            <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-70">R</kbd>
           </Button>
           <Button asChild>
-            <Link to={`/decks/${deck._id}`}>Back to Deck</Link>
+            <Link to={`/decks/${deck._id}`}>
+              Back to Deck
+              <kbd className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded opacity-70">Esc</kbd>
+            </Link>
           </Button>
         </div>
       </div>
@@ -152,14 +171,18 @@ export function FlashcardMode({ deck }) {
         </Button>
       </div>
 
-      {/* Algorithm info banner — first time only */}
+      {/* Smart review banner */}
       {sessionCount > 0 && summary && (
         <div className="w-full max-w-2xl bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 flex items-center gap-2 text-xs text-muted-foreground">
           <Info className="h-3.5 w-3.5 text-primary shrink-0" />
           <span>
             Smart review active —
-            {summary.repeated > 0 && <span className="text-orange-400 font-semibold"> {summary.repeated} weak cards appear more often</span>}
-            {summary.skipped > 0 && <span className="text-green-400 font-semibold">, {summary.skipped} easy cards skipped</span>}
+            {summary.repeated > 0 && (
+              <span className="text-orange-400 font-semibold"> {summary.repeated} weak cards appear more often</span>
+            )}
+            {summary.skipped > 0 && (
+              <span className="text-green-400 font-semibold">, {summary.skipped} easy cards skipped</span>
+            )}
           </span>
         </div>
       )}
@@ -213,7 +236,9 @@ export function FlashcardMode({ deck }) {
       {/* Rating buttons */}
       <div className="w-full max-w-2xl">
         <p className="text-center text-xs text-muted-foreground mb-3">
-          {isFlipped ? 'How well did you know this?' : 'Flip the card first, then rate your confidence'}
+          {isFlipped
+            ? 'How well did you know this?'
+            : 'Flip the card first, then rate your confidence'}
         </p>
         <div className="grid grid-cols-5 gap-2">
           {CONFIDENCE_LEVELS.map((level) => (
