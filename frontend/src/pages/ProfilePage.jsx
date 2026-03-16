@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useProfile }     from '@/features/profile'
 import { PageWrapper }    from '@/components/layout/PageWrapper'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -7,6 +7,8 @@ import { Badge }          from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button }         from '@/components/ui/button'
 import { Progress }       from '@/components/ui/progress'
+import { Input }          from '@/components/ui/input'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Link }           from 'react-router-dom'
 import {
   Flame, Trophy, BookOpen, Clock,
@@ -22,13 +24,38 @@ const ROLE_COLORS = {
 }
 
 export default function ProfilePage() {
-  const { data, isLoading } = useProfile()
-  const [tab, setTab]       = useState('decks')
+  const { data, isLoading }                   = useProfile()
+  const [tab, setTab]                         = useState('decks')
+  const [showEditDialog, setShowEditDialog]   = useState(false)
+  const [editName, setEditName]               = useState('')
+  const [editUsername, setEditUsername]       = useState('')
+  const [avatarPreview, setAvatarPreview]     = useState(null)
+  const fileInputRef                          = useRef(null)
 
   if (isLoading) return <PageWrapper><LoadingSpinner /></PageWrapper>
 
   const { user, myDecks, mySessions } = data
   const masteryPct = Math.round((18 / 30) * 100)
+
+  const handleOpenEdit = () => {
+    setEditName(user?.name ?? '')
+    setEditUsername(user?.username ?? '')
+    setAvatarPreview(user?.avatar ?? null)
+    setShowEditDialog(true)
+  }
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => setAvatarPreview(reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  const handleSaveProfile = () => {
+    // Phase B: call real API here
+    setShowEditDialog(false)
+  }
 
   return (
     <PageWrapper className="max-w-6xl">
@@ -41,14 +68,24 @@ export default function ProfilePage() {
             <div className="flex items-end gap-5 -mt-10">
               <div className="relative shrink-0">
                 <Avatar className="h-20 w-20 border-4 border-card shadow-xl">
-                  <AvatarImage src={user?.avatar} />
+                  <AvatarImage src={avatarPreview ?? user?.avatar} />
                   <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary">
                     {user?.name?.[0]?.toUpperCase() ?? 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <button className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg hover:bg-primary/90 transition-colors">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg hover:bg-primary/90 transition-colors"
+                >
                   <Camera className="h-3 w-3" />
                 </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
               </div>
               <div className="pb-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -64,7 +101,9 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="flex gap-2 pb-1">
-              <Button variant="outline" size="sm">Edit Profile</Button>
+              <Button variant="outline" size="sm" onClick={handleOpenEdit}>
+                Edit Profile
+              </Button>
               <Button size="sm" asChild>
                 <Link to="/decks/new"><Plus className="h-3.5 w-3.5 mr-1" />New Deck</Link>
               </Button>
@@ -128,7 +167,6 @@ export default function ProfilePage() {
 
       {/* ── Custom tabs ── */}
       <div>
-        {/* Tab buttons */}
         <div className="flex border-b border-border mb-5">
           <button
             onClick={() => setTab('decks')}
@@ -304,6 +342,89 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* ── Edit Profile Dialog ── */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-5 py-2">
+            {/* Avatar upload */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative">
+                <Avatar className="h-20 w-20 border-4 border-card shadow-xl">
+                  <AvatarImage src={avatarPreview} />
+                  <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary">
+                    {editName?.[0]?.toUpperCase() ?? 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg hover:bg-primary/90 transition-colors"
+                >
+                  <Camera className="h-3 w-3" />
+                </button>
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs text-primary hover:underline"
+              >
+                Change profile photo
+              </button>
+              <p className="text-xs text-muted-foreground">
+                JPG, PNG or GIF · Max 5MB · Upload available in Phase B
+              </p>
+            </div>
+
+            {/* Name */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Full Name</label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Your full name"
+              />
+            </div>
+
+            {/* Username */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Username</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                <Input
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  placeholder="username"
+                  className="pl-7"
+                />
+              </div>
+            </div>
+
+            {/* Email — read only */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-foreground">Email</label>
+              <Input
+                value={user?.email ?? ''}
+                disabled
+                className="opacity-50 cursor-not-allowed"
+              />
+              <p className="text-xs text-muted-foreground">Email cannot be changed here.</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveProfile}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </PageWrapper>
   )
-}
+} 
