@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getDeck } from '../api/decks.api'
+import { getDeck } from '@/features/classes/api/classes'
 
 export function useDeck(id) {
   const [deck, setDeck]           = useState(null)

@@ -1,99 +1,88 @@
 import { useState } from 'react'
+import { useParams, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useCreateDeck }  from '@/features/decks'
+import { useCreateDeck }  from '@/features/classes'
+import { useClass }       from '@/features/classes'
 import { PageWrapper }    from '@/components/layout/PageWrapper'
 import { Button }         from '@/components/ui/button'
 import { Input }          from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge }          from '@/components/ui/badge'
-import { Plus, Trash2, BookOpen } from 'lucide-react'
+import { Plus, Trash2, BookOpen, ArrowLeft } from 'lucide-react'
 import { cn }             from '@/lib/utils'
 
 const deckSchema = z.object({
   title:       z.string().min(3, 'Title must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+  description: z.string().optional(),
   isPublic:    z.boolean(),
 })
 
 const emptyCard = () => ({ id: Date.now(), front: '', back: '' })
 
 export default function CreateDeckPage() {
+  const { id: classId }              = useParams()
   const { submit, isLoading, error } = useCreateDeck()
-  const [cards, setCards]             = useState([emptyCard()])
-  const [isPublic, setIsPublic]       = useState(false)
+  const { cls }                      = useClass(classId)
+  const [cards, setCards]            = useState([emptyCard()])
+  const [isPublic, setIsPublic]      = useState(false)
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(deckSchema),
     defaultValues: { isPublic: false },
   })
 
-  const addCard = () => setCards((prev) => [...prev, emptyCard()])
-
-  const removeCard = (id) =>
-    setCards((prev) => prev.filter((c) => c.id !== id))
-
+  const addCard    = () => setCards((prev) => [...prev, emptyCard()])
+  const removeCard = (id) => setCards((prev) => prev.filter((c) => c.id !== id))
   const updateCard = (id, field, value) =>
-    setCards((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c))
-    )
+    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)))
 
   const onSubmit = (data) => {
     const validCards = cards.filter((c) => c.front.trim() && c.back.trim())
-    submit({ ...data, cards: validCards })
+    submit({ ...data, classId, cards: validCards, isPublic })
   }
 
   return (
     <PageWrapper>
+      {/* Back to class */}
+      <Button variant="ghost" size="sm" asChild className="mb-4 -ml-2">
+        <Link to={`/classes/${classId}`}>
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          {cls?.name ?? 'Back to Class'}
+        </Link>
+      </Button>
+
       <div className="mb-8">
         <h1 className="text-3xl font-extrabold text-foreground mb-1">Create New Deck</h1>
-        <p className="text-muted-foreground">Add your flashcards and start studying.</p>
+        <p className="text-muted-foreground">
+          Adding to <span className="text-primary font-medium">{cls?.name ?? 'class'}</span>
+        </p>
       </div>
 
       {error && (
-        <div className="mb-6 bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-md">
-          {error}
-        </div>
+        <div className="mb-6 bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-md">{error}</div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid lg:grid-cols-2 gap-8">
-
-          {/* Left — Deck metadata */}
+          {/* Left */}
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader><CardTitle>Deck Info</CardTitle></CardHeader>
               <CardContent className="flex flex-col gap-4">
-
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Title</label>
-                  <Input
-                    {...register('title')}
-                    placeholder="e.g. Calculus — Limits & Derivatives"
-                  />
-                  {errors.title && (
-                    <p className="text-destructive text-xs">{errors.title.message}</p>
-                  )}
+                  <Input {...register('title')} placeholder="e.g. Data Structures & Algorithms" />
+                  {errors.title && <p className="text-destructive text-xs">{errors.title.message}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Description</label>
-                  <Input
-                    {...register('description')}
-                    placeholder="What is this deck about?"
-                  />
-                  {errors.description && (
-                    <p className="text-destructive text-xs">{errors.description.message}</p>
-                  )}
+                  <label className="text-sm font-medium">Description <span className="text-muted-foreground text-xs">(optional)</span></label>
+                  <Input {...register('description')} placeholder="What is this deck about?" />
                 </div>
 
-                {/* Visibility toggle */}
+                {/* Visibility */}
                 <div className="flex items-center justify-between pt-2 border-t">
                   <div>
                     <p className="text-sm font-medium">Make Public</p>
@@ -101,47 +90,21 @@ export default function CreateDeckPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsPublic((v) => !v)
-                      setValue('isPublic', !isPublic)
-                    }}
-                    className={cn(
-                      'w-11 h-6 rounded-full transition-colors relative',
-                      isPublic ? 'bg-primary' : 'bg-muted'
-                    )}
+                    onClick={() => { setIsPublic((v) => !v); setValue('isPublic', !isPublic) }}
+                    className={cn('w-11 h-6 rounded-full transition-colors relative', isPublic ? 'bg-primary' : 'bg-muted')}
                   >
-                    <span
-                      className={cn(
-                        'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
-                        isPublic ? 'translate-x-5' : 'translate-x-0.5'
-                      )}
-                    />
+                    <span className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform', isPublic ? 'translate-x-5' : 'translate-x-0.5')} />
                   </button>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Cover placeholder */}
-            <Card>
-              <CardHeader><CardTitle>Cover Image</CardTitle></CardHeader>
-              <CardContent>
-                <div className="h-32 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground gap-2 cursor-pointer hover:border-primary hover:text-primary transition-colors">
-                  <BookOpen className="h-8 w-8" />
-                  <p className="text-sm">Upload cover image</p>
-                  <p className="text-xs opacity-60">Available in Phase B</p>
-                </div>
-              </CardContent>
-            </Card>
-
             <Button type="submit" size="lg" disabled={isLoading}>
-              {isLoading
-                ? 'Creating...'
-                : `Create Deck (${cards.filter((c) => c.front && c.back).length} cards)`
-              }
+              {isLoading ? 'Creating...' : `Create Deck (${cards.filter((c) => c.front && c.back).length} cards)`}
             </Button>
           </div>
 
-          {/* Right — Card editor */}
+          {/* Right — Cards */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">
@@ -176,7 +139,7 @@ export default function CreateDeckPage() {
                       <Input
                         value={card.front}
                         onChange={(e) => updateCard(card.id, 'front', e.target.value)}
-                        placeholder="e.g. What is a derivative?"
+                        placeholder="e.g. What is a stack?"
                       />
                     </div>
                     <div className="flex flex-col gap-1.5">
@@ -184,7 +147,7 @@ export default function CreateDeckPage() {
                       <Input
                         value={card.back}
                         onChange={(e) => updateCard(card.id, 'back', e.target.value)}
-                        placeholder="e.g. The instantaneous rate of change..."
+                        placeholder="e.g. A LIFO data structure..."
                       />
                     </div>
                   </CardContent>
@@ -192,7 +155,6 @@ export default function CreateDeckPage() {
               ))}
             </div>
           </div>
-
         </div>
       </form>
     </PageWrapper>

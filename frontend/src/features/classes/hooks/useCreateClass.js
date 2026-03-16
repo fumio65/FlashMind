@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createDeck } from '@/features/classes/api/classes'
+import { createClass } from '../api/classes'
 
-export function useCreateDeck() {
+export function useCreateClass() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError]         = useState(null)
   const navigate                  = useNavigate()
@@ -11,8 +11,8 @@ export function useCreateDeck() {
     setIsLoading(true)
     setError(null)
     try {
-      const deck = await createDeck(data)
-      navigate(`/decks/${deck._id}`)
+      const cls = await createClass(data)
+      navigate(`/classes/${cls._id}`)
     } catch (err) {
       setError(err.message)
     } finally {
