@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRegister } from '@/features/auth'
+import { useAuthStore } from '@/features/auth/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BookOpen, UserPlus } from 'lucide-react'
@@ -14,16 +16,22 @@ const schema = z.object({
     .min(3, 'Username must be at least 3 characters')
     .max(20, 'Username must be 20 characters or less')
     .regex(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, and underscores'),
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email:           z.string().email('Enter a valid email address'),
+  password:        z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ['confirmPassword'],
+  path:    ['confirmPassword'],
 })
 
 export default function RegisterPage() {
   const { register: registerUser, isLoading, error } = useRegister()
+  const authUser                                      = useAuthStore((s) => s.user)
+  const navigate                                      = useNavigate()
+
+  useEffect(() => {
+    if (authUser) navigate('/dashboard', { replace: true })
+  }, [authUser])
 
   const {
     register,
@@ -41,7 +49,6 @@ export default function RegisterPage() {
           <BookOpen className="h-6 w-6" />
           FlashMind
         </div>
-
         <div>
           <h2 className="text-4xl font-extrabold leading-tight mb-4">
             Start studying <br /> smarter today.
@@ -50,14 +57,12 @@ export default function RegisterPage() {
             Create your free account and get access to thousands of decks made by Filipino students, just like you.
           </p>
         </div>
-
         <p className="text-primary-foreground/50 text-sm">© {new Date().getFullYear()} FlashMind</p>
       </div>
 
       {/* Right panel */}
       <div className="flex items-center justify-center px-6 py-12 bg-background">
         <div className="w-full max-w-sm">
-          {/* Mobile logo */}
           <div className="flex items-center gap-2 font-bold text-xl text-primary mb-8 md:hidden">
             <BookOpen className="h-6 w-6" />
             FlashMind
