@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useLogin } from '@/features/auth'
+import { useAuthStore } from '@/features/auth/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BookOpen, LogIn } from 'lucide-react'
@@ -14,6 +16,12 @@ const schema = z.object({
 
 export default function LoginPage() {
   const { login, isLoading, error } = useLogin()
+  const authUser                    = useAuthStore((s) => s.user)
+  const navigate                    = useNavigate()
+
+  useEffect(() => {
+    if (authUser) navigate('/dashboard', { replace: true })
+  }, [authUser])
 
   const {
     register,
@@ -29,7 +37,6 @@ export default function LoginPage() {
           <BookOpen className="h-6 w-6" />
           FlashMind
         </div>
-
         <div>
           <h2 className="text-4xl font-extrabold leading-tight mb-4">
             Welcome back. <br /> Let's get studying.
@@ -38,14 +45,12 @@ export default function LoginPage() {
             Pick up right where you left off. Your decks, your progress, your streak — all waiting for you.
           </p>
         </div>
-
         <p className="text-primary-foreground/50 text-sm">© {new Date().getFullYear()} FlashMind</p>
       </div>
 
       {/* Right panel */}
       <div className="flex items-center justify-center px-6 py-12 bg-background">
         <div className="w-full max-w-sm">
-          {/* Mobile logo */}
           <div className="flex items-center gap-2 font-bold text-xl text-primary mb-8 md:hidden">
             <BookOpen className="h-6 w-6" />
             FlashMind
@@ -103,7 +108,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Mock hint */}
           <div className="mt-8 p-4 bg-muted rounded-lg text-xs text-muted-foreground space-y-1">
             <p className="font-semibold text-foreground">Demo accounts</p>
             <p>Student — juan@example.com / password123</p>

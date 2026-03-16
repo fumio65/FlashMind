@@ -1,55 +1,52 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/features/auth/store/authStore'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Navbar } from '@/components/layout/Navbar'
 import {
-  BookOpen,
-  Brain,
-  Trophy,
-  Users,
-  Zap,
-  RotateCcw,
-  ClipboardList,
-  TrendingUp,
+  BookOpen, Brain, Trophy, Users,
+  Zap, RotateCcw, ClipboardList, TrendingUp,
 } from 'lucide-react'
 
 const features = [
   {
     icon: RotateCcw,
     title: 'Flashcard Mode',
-    description:
-      'Flip through cards, mark what you know, and focus on what needs more review.',
+    description: 'Flip through cards, mark what you know, and focus on what needs more review.',
     color: 'text-blue-500',
     bg: 'bg-blue-50',
   },
   {
     icon: ClipboardList,
     title: 'Quiz Mode',
-    description:
-      'Test yourself with auto-generated multiple choice questions and a 30-second timer.',
+    description: 'Test yourself with auto-generated multiple choice questions and a 30-second timer.',
     color: 'text-purple-500',
     bg: 'bg-purple-50',
   },
   {
     icon: TrendingUp,
     title: 'Track Progress',
-    description:
-      'Monitor your study streak, cards mastered, and weekly activity at a glance.',
+    description: 'Monitor your study streak, cards mastered, and weekly activity at a glance.',
     color: 'text-green-500',
     bg: 'bg-green-50',
   },
 ]
 
 const stats = [
-  { value: '10,000+', label: 'Flashcard Decks' },
-  { value: '50,000+', label: 'Active Students' },
-  { value: '98%',     label: 'Pass Rate' },
-  { value: '4.9★',    label: 'Average Rating' },
+  { value: '10,000+', label: 'Flashcard Decks'  },
+  { value: '50,000+', label: 'Active Students'  },
+  { value: '98%',     label: 'Pass Rate'         },
+  { value: '4.9★',    label: 'Average Rating'   },
 ]
 
 export default function LandingPage() {
-  const user = useAuthStore((s) => s.user)
+  const user     = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (user) navigate('/dashboard', { replace: true })
+  }, [user])
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,20 +70,12 @@ export default function LandingPage() {
         </p>
 
         <div className="flex items-center justify-center gap-4 flex-wrap">
-          {user ? (
-            <Button size="lg" asChild>
-              <Link to="/dashboard">Go to Dashboard</Link>
-            </Button>
-          ) : (
-            <>
-              <Button size="lg" asChild>
-                <Link to="/register">Get Started Free</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link to="/browse">Browse Decks</Link>
-              </Button>
-            </>
-          )}
+          <Button size="lg" asChild>
+            <Link to="/register">Get Started Free</Link>
+          </Button>
+          <Button size="lg" variant="outline" asChild>
+            <Link to="/browse">Browse Decks</Link>
+          </Button>
         </div>
       </section>
 
