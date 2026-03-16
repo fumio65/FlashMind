@@ -8,15 +8,12 @@ import { Button }         from '@/components/ui/button'
 import { Input }          from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge }          from '@/components/ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus, Trash2, BookOpen } from 'lucide-react'
-import { CATEGORIES }     from '@/lib/constants'
 import { cn }             from '@/lib/utils'
 
 const deckSchema = z.object({
   title:       z.string().min(3, 'Title must be at least 3 characters'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  category:    z.string().min(1, 'Select a category'),
   isPublic:    z.boolean(),
 })
 
@@ -31,14 +28,11 @@ export default function CreateDeckPage() {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(deckSchema),
     defaultValues: { isPublic: false },
   })
-
-  const category = watch('category')
 
   const addCard = () => setCards((prev) => [...prev, emptyCard()])
 
@@ -70,39 +64,33 @@ export default function CreateDeckPage() {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid lg:grid-cols-2 gap-8">
+
           {/* Left — Deck metadata */}
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader><CardTitle>Deck Info</CardTitle></CardHeader>
               <CardContent className="flex flex-col gap-4">
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Title</label>
-                  <Input {...register('title')} placeholder="e.g. Calculus — Limits & Derivatives" />
-                  {errors.title && <p className="text-destructive text-xs">{errors.title.message}</p>}
+                  <Input
+                    {...register('title')}
+                    placeholder="e.g. Calculus — Limits & Derivatives"
+                  />
+                  {errors.title && (
+                    <p className="text-destructive text-xs">{errors.title.message}</p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Description</label>
-                  <Input {...register('description')} placeholder="What is this deck about?" />
-                  {errors.description && <p className="text-destructive text-xs">{errors.description.message}</p>}
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Category</label>
-                  <Select
-                    value={category}
-                    onValueChange={(val) => setValue('category', val, { shouldValidate: true })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.filter((c) => c !== 'All').map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.category && <p className="text-destructive text-xs">{errors.category.message}</p>}
+                  <Input
+                    {...register('description')}
+                    placeholder="What is this deck about?"
+                  />
+                  {errors.description && (
+                    <p className="text-destructive text-xs">{errors.description.message}</p>
+                  )}
                 </div>
 
                 {/* Visibility toggle */}
@@ -146,7 +134,10 @@ export default function CreateDeckPage() {
             </Card>
 
             <Button type="submit" size="lg" disabled={isLoading}>
-              {isLoading ? 'Creating...' : `Create Deck (${cards.filter(c => c.front && c.back).length} cards)`}
+              {isLoading
+                ? 'Creating...'
+                : `Create Deck (${cards.filter((c) => c.front && c.back).length} cards)`
+              }
             </Button>
           </div>
 
@@ -201,6 +192,7 @@ export default function CreateDeckPage() {
               ))}
             </div>
           </div>
+
         </div>
       </form>
     </PageWrapper>
