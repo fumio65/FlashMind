@@ -1,18 +1,17 @@
-import { Link } from 'react-router-dom'
-import { useAuthStore }  from '@/features/auth/store/authStore'
-import { useDashboard }  from '@/features/dashboard'
-import { ActivityChart } from '@/features/dashboard'
-import { DeckCard }      from '@/features/decks'
-import { PageWrapper }   from '@/components/layout/PageWrapper'
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { Link }            from 'react-router-dom'
+import { useAuthStore }    from '@/features/auth/store/authStore'
+import { useDashboard }    from '@/features/dashboard'
+import { ActivityChart }   from '@/features/dashboard'
+import { ClassCard }       from '@/features/classes/components/ClassCard'
+import { PageWrapper }     from '@/components/layout/PageWrapper'
+import { LoadingSpinner }  from '@/components/shared/LoadingSpinner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+import { Button }          from '@/components/ui/button'
+import { Progress }        from '@/components/ui/progress'
 import { Plus, BookOpen, Trophy, Clock, Flame } from 'lucide-react'
 
 export default function DashboardPage() {
-  const user             = useAuthStore((s) => s.user)
+  const user               = useAuthStore((s) => s.user)
   const { stats, isLoading } = useDashboard()
 
   if (isLoading) return <PageWrapper><LoadingSpinner /></PageWrapper>
@@ -32,21 +31,21 @@ export default function DashboardPage() {
           <p className="text-muted-foreground mt-1">Ready to study? Here's your progress.</p>
         </div>
         <Button asChild>
-          <Link to="/decks/new"><Plus className="h-4 w-4 mr-2" />New Deck</Link>
+          <Link to="/classes/new"><Plus className="h-4 w-4 mr-2" />New Class</Link>
         </Button>
       </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: Flame,    label: 'Study Streak',    value: `${stats?.studyStreak ?? 0} days`,  color: 'text-orange-500' },
-          { icon: Trophy,   label: 'Cards Mastered',  value: stats?.cardsMastered ?? 0,           color: 'text-yellow-500' },
-          { icon: BookOpen, label: 'Total Sessions',  value: stats?.totalSessions ?? 0,           color: 'text-blue-500'   },
-          { icon: Clock,    label: 'Mastery',         value: `${mastery}%`,                       color: 'text-green-500'  },
+          { icon: Flame,    label: 'Study Streak',   value: `${stats?.studyStreak ?? 0} days`,  color: 'text-orange-500' },
+          { icon: Trophy,   label: 'Cards Mastered', value: stats?.cardsMastered ?? 0,           color: 'text-yellow-500' },
+          { icon: BookOpen, label: 'Total Sessions', value: stats?.totalSessions ?? 0,           color: 'text-blue-500'   },
+          { icon: Clock,    label: 'Mastery',        value: `${mastery}%`,                       color: 'text-green-500'  },
         ].map(({ icon: Icon, label, value, color }) => (
           <Card key={label}>
             <CardContent className="p-5 flex items-center gap-4">
-              <div className={`p-2.5 rounded-lg bg-muted`}>
+              <div className="p-2.5 rounded-lg bg-muted">
                 <Icon className={`h-5 w-5 ${color}`} />
               </div>
               <div>
@@ -69,7 +68,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Mastery card */}
+        {/* Mastery */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">Overall Mastery</CardTitle>
@@ -88,19 +87,29 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Recent decks */}
+      {/* Recent Classes */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Recent Decks</h2>
+          <h2 className="text-lg font-semibold text-foreground">My Classes</h2>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/browse">View all →</Link>
+            <Link to="/browse">Browse all →</Link>
           </Button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {stats?.recentDecks?.map((deck) => (
-            <DeckCard key={deck._id} deck={deck} />
-          ))}
-        </div>
+        {stats?.recentClasses?.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl">
+            <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
+            <p className="mb-3 text-sm">No classes yet.</p>
+            <Button asChild size="sm">
+              <Link to="/classes/new"><Plus className="h-3.5 w-3.5 mr-1" />Create your first class</Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {stats?.recentClasses?.map((cls) => (
+              <ClassCard key={cls._id} cls={cls} />
+            ))}
+          </div>
+        )}
       </div>
     </PageWrapper>
   )

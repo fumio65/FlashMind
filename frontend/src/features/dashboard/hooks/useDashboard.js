@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
-import { getMyStats } from '@/features/decks/api/decks.api'
+import { getMyStats } from '@/features/classes/api/classes'
 
 export function useDashboard() {
-  const [stats, setStats]       = useState(null)
+  const [stats, setStats]         = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError]       = useState(null)
+  const [error, setError]         = useState(null)
 
   useEffect(() => {
     getMyStats()

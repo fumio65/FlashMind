@@ -1,12 +1,14 @@
 import { createBrowserRouter } from 'react-router-dom'
-import { ProtectedRoute } from '@/components/shared/ProtectedRoute'
-import { AdminRoute }     from '@/components/shared/AdminRoute'
+import { ProtectedRoute }     from '@/components/shared/ProtectedRoute'
+import { AdminRoute }         from '@/components/shared/AdminRoute'
 
 import LandingPage        from '@/pages/LandingPage'
 import LoginPage          from '@/pages/LoginPage'
 import RegisterPage       from '@/pages/RegisterPage'
 import DashboardPage      from '@/pages/DashboardPage'
 import BrowsePage         from '@/pages/BrowsePage'
+import CreateClassPage    from '@/pages/CreateClassPage'
+import ClassDetailPage    from '@/pages/ClassDetailPage'
 import CreateDeckPage     from '@/pages/CreateDeckPage'
 import DeckDetailPage     from '@/pages/DeckDetailPage'
 import StudyPage          from '@/pages/StudyPage'
@@ -23,12 +25,14 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      { path: '/dashboard',  element: <DashboardPage /> },
-      { path: '/browse',     element: <BrowsePage /> },
-      { path: '/decks/new',  element: <CreateDeckPage /> },
-      { path: '/decks/:id',  element: <DeckDetailPage /> },
-      { path: '/study/:id',  element: <StudyPage /> },
-      { path: '/profile',    element: <ProfilePage /> },
+      { path: '/dashboard',              element: <DashboardPage /> },
+      { path: '/browse',                 element: <BrowsePage /> },
+      { path: '/classes/new',            element: <CreateClassPage /> },
+      { path: '/classes/:id',            element: <ClassDetailPage /> },
+      { path: '/classes/:id/decks/new',  element: <CreateDeckPage /> },
+      { path: '/decks/:id',              element: <DeckDetailPage /> },
+      { path: '/study/:id',              element: <StudyPage /> },
+      { path: '/profile',                element: <ProfilePage /> },
     ],
   },
 
@@ -37,9 +41,9 @@ export const router = createBrowserRouter([
     children: [{
       element: <AdminRoute />,
       children: [
-        { path: '/admin',        element: <AdminDashboardPage /> },
-        { path: '/admin/decks',  element: <AdminDecksPage /> },
-        { path: '/admin/users',  element: <AdminUsersPage /> },
+        { path: '/admin',       element: <AdminDashboardPage /> },
+        { path: '/admin/decks', element: <AdminDecksPage /> },
+        { path: '/admin/users', element: <AdminUsersPage /> },
       ],
     }],
   },
