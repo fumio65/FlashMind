@@ -1,6 +1,11 @@
 import { RouterProvider } from 'react-router-dom'
-import { router } from './router'
+import { ThemeProvider }  from 'next-themes'
+import { router }         from './router'
 
 export function Providers() {
-  return <RouterProvider router={router} />
+  return (
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  )
 }
