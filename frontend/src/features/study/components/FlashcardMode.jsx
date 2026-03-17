@@ -9,12 +9,13 @@ import { RotateCcw, ArrowLeft, Info } from 'lucide-react'
 import { cn }         from '@/lib/utils'
 
 export function FlashcardMode({ deck }) {
-  const [previousRatings, setPreviousRatings] = useState({})
-  const [stamp, setStamp]                     = useState(null)
-  const [sessionCount, setSessionCount]       = useState(0)
+  const [previousRatings, setPreviousRatings]     = useState({})
+  const [stamp, setStamp]                         = useState(null)
+  const [sessionCount, setSessionCount]           = useState(0)
   const [showRestartDialog, setShowRestartDialog] = useState(false)
-  const navigate                              = useNavigate()
-  const handleConfirmRestartRef               = useRef(null)
+  const [showExitDialog, setShowExitDialog]       = useState(false)
+  const navigate                                  = useNavigate()
+  const handleConfirmRestartRef                   = useRef(null)
 
   const {
     currentCard, currentIndex, isFlipped, flip,
@@ -50,19 +51,30 @@ export function FlashcardMode({ deck }) {
     handleConfirmRestartRef.current = handleConfirmRestart
   })
 
-  // Wire up Esc → close dialog (if open) or back, R → open restart dialog
+  // Wire up Esc → show exit dialog, R → open restart dialog
   useEffect(() => {
-    onNavigateBack.current = () => {
-      if (showRestartDialog) {
-        setShowRestartDialog(false)
-      } else {
-        navigate(`/decks/${deck._id}`)
-      }
-    }
+    onNavigateBack.current = () => setShowExitDialog(true)
     onRestartStudy.current = () => setShowRestartDialog(true)
   })
 
-  // When restart dialog is open: Esc closes it, R confirms restart
+  // Exit dialog: Esc closes it, Q confirms exit
+  useEffect(() => {
+    if (!showExitDialog) return
+    const handler = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation()
+        setShowExitDialog(false)
+      }
+      if (e.key === 'q' || e.key === 'Q') {
+        e.stopPropagation()
+        navigate(`/decks/${deck._id}`)
+      }
+    }
+    window.addEventListener('keydown', handler, true)
+    return () => window.removeEventListener('keydown', handler, true)
+  }, [showExitDialog])
+
+  // Restart dialog: Esc closes it, R confirms restart
   useEffect(() => {
     if (!showRestartDialog) return
     const handler = (e) => {
@@ -192,11 +204,9 @@ export function FlashcardMode({ deck }) {
 
       {/* Header */}
       <div className="w-full max-w-2xl flex items-center justify-between">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/decks/${deck._id}`}>
-            <ArrowLeft className="h-4 w-4 mr-1" />Back
-            <kbd className="ml-1.5 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-60">Esc</kbd>
-          </Link>
+        <Button variant="ghost" size="sm" onClick={() => setShowExitDialog(true)}>
+          <ArrowLeft className="h-4 w-4 mr-1" />Back
+          <kbd className="ml-1.5 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-60">Esc</kbd>
         </Button>
         <div className="text-center">
           <span className="text-sm font-medium text-muted-foreground">
@@ -314,8 +324,52 @@ export function FlashcardMode({ deck }) {
         {' · '}
         <kbd className="px-1.5 py-0.5 bg-muted rounded">R</kbd> Restart
         {' · '}
-        <kbd className="px-1.5 py-0.5 bg-muted rounded">Esc</kbd> Back
+        <kbd className="px-1.5 py-0.5 bg-muted rounded">Esc</kbd> Exit
       </p>
+
+      {/* Exit warning dialog */}
+      <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ArrowLeft className="h-5 w-5 text-destructive" />
+              Leave Session?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <p className="text-sm text-muted-foreground mb-4">
+              Your current session progress will be lost if you leave now.
+            </p>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-extrabold text-green-400">{known.length}</p>
+                <p className="text-xs text-green-400/80">Known</p>
+              </div>
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-extrabold text-yellow-400">{hard.length}</p>
+                <p className="text-xs text-yellow-400/80">Hard</p>
+              </div>
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
+                <p className="text-lg font-extrabold text-red-400">{stillLearning.length}</p>
+                <p className="text-xs text-red-400/80">Forgot</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center">
+              {currentIndex} of {total} cards rated so far
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowExitDialog(false)}>
+              Keep Studying
+              <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-70">Esc</kbd>
+            </Button>
+            <Button variant="destructive" onClick={() => navigate(`/decks/${deck._id}`)}>
+              Leave Session
+              <kbd className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded opacity-70">Q</kbd>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Restart confirmation dialog */}
       <Dialog
@@ -329,13 +383,10 @@ export function FlashcardMode({ deck }) {
               Restart Session?
             </DialogTitle>
           </DialogHeader>
-
           <div className="py-2">
             <p className="text-sm text-muted-foreground mb-4">
               Your current progress will be used to build a smarter queue for the next round.
             </p>
-
-            {/* Current progress summary */}
             <div className="grid grid-cols-3 gap-2 mb-4">
               <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
                 <p className="text-lg font-extrabold text-green-400">{known.length}</p>
@@ -350,12 +401,10 @@ export function FlashcardMode({ deck }) {
                 <p className="text-xs text-red-400/80">Forgot</p>
               </div>
             </div>
-
             <p className="text-xs text-muted-foreground text-center">
               {currentIndex} of {total} cards rated so far
             </p>
           </div>
-
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowRestartDialog(false)}>
               Keep Going
