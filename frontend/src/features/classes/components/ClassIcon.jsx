@@ -3,32 +3,33 @@ import { BookOpen } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function ClassIcon({ icon, size = 'md', className }) {
-  const sizes = {
-    sm:  'h-8 w-8 text-xl',
-    md:  'h-12 w-12 text-2xl',
-    lg:  'h-16 w-16 text-4xl',
-    xl:  'h-20 w-20 text-5xl',
+  const sizeMap = {
+    sm: { container: 'h-8 w-8',   icon: 'h-4 w-4', text: 'text-lg'  },
+    md: { container: 'h-12 w-12', icon: 'h-6 w-6', text: 'text-2xl' },
+    lg: { container: 'h-16 w-16', icon: 'h-8 w-8', text: 'text-4xl' },
+    xl: { container: 'h-20 w-20', icon: 'h-9 w-9', text: 'text-5xl' },
   }
 
-  const containerSizes = {
-    sm:  'h-8 w-8',
-    md:  'h-12 w-12',
-    lg:  'h-16 w-16',
-    xl:  'h-20 w-20',
-  }
+  const s = sizeMap[size] ?? sizeMap.md
 
   if (!icon) {
     return (
-      <div className={cn('rounded-xl bg-primary/10 flex items-center justify-center', containerSizes[size], className)}>
-        <BookOpen className={cn('text-primary', size === 'sm' ? 'h-4 w-4' : size === 'md' ? 'h-6 w-6' : 'h-8 w-8')} />
+      <div className={cn(
+        'rounded-xl bg-white/20 backdrop-blur-sm  shadow-sm flex items-center justify-center shrink-0',
+        s.container, className
+      )}>
+        <BookOpen className={cn('text-white', s.icon)} />
       </div>
     )
   }
 
   if (icon.type === 'emoji') {
     return (
-      <div className={cn('rounded-xl bg-white/10 flex items-center justify-center', containerSizes[size], className)}>
-        <span className={sizes[size]}>{icon.value}</span>
+      <div className={cn(
+        'rounded-xl bg-white/20 backdrop-blur-sm  shadow-sm flex items-center justify-center shrink-0',
+        s.container, className
+      )}>
+        <span className={s.text} style={{ lineHeight: 1 }}>{icon.value}</span>
       </div>
     )
   }
@@ -36,19 +37,27 @@ export function ClassIcon({ icon, size = 'md', className }) {
   if (icon.type === 'lucide') {
     const Icon = LucideIcons[icon.value] ?? BookOpen
     return (
-      <div className={cn('rounded-xl bg-white/10 flex items-center justify-center', containerSizes[size], className)}>
-        <Icon className={cn('text-white', size === 'sm' ? 'h-4 w-4' : size === 'md' ? 'h-6 w-6' : 'h-8 w-8')} />
+      <div className={cn(
+        'rounded-xl bg-white/20 backdrop-blur-sm shadow-sm flex items-center justify-center shrink-0',
+        s.container, className
+      )}>
+        <Icon className={cn('text-white', s.icon)} />
       </div>
     )
   }
 
   if (icon.type === 'image') {
     return (
-      <img
-        src={icon.value}
-        alt="class icon"
-        className={cn('rounded-xl object-cover', containerSizes[size], className)}
-      />
+      <div className={cn(
+        'rounded-xl bg-white/20 backdrop-blur-sm shadow-sm flex items-center justify-center overflow-hidden shrink-0',
+        s.container, className
+      )}>
+        <img
+          src={icon.value}
+          alt="class icon"
+          className="w-full h-full object-cover"
+        />
+      </div>
     )
   }
 
