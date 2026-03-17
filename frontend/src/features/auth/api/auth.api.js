@@ -23,18 +23,7 @@ const MOCK_USERS = [
     role: 'admin',
     studyStreak: 12,
     createdAt: new Date('2024-01-01'),
-  },
-  {
-    _id: '3',
-    name: 'Maria Santos',
-    username: 'mariasantos',
-    email: 'maria@example.com',
-    password: 'password123',
-    avatar: null,
-    role: 'creator',
-    studyStreak: 8,
-    createdAt: new Date('2024-02-10'),
-  },
+  }
 ]
 
 export const loginUser = ({ email, password }) => {
