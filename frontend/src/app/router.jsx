@@ -14,8 +14,9 @@ import DeckDetailPage     from '@/pages/DeckDetailPage'
 import StudyPage          from '@/pages/StudyPage'
 import ProfilePage        from '@/pages/ProfilePage'
 import AdminDashboardPage from '@/pages/AdminDashboardPage'
-import AdminDecksPage     from '@/pages/AdminDecksPage'
 import AdminUsersPage     from '@/pages/AdminUsersPage'
+import AdminClassesPage   from '@/pages/AdminClassesPage'
+import AdminClassDetailPage from '@/pages/AdminClassDetailPage'
 
 export const router = createBrowserRouter([
   { path: '/',         element: <LandingPage /> },
@@ -41,9 +42,10 @@ export const router = createBrowserRouter([
     children: [{
       element: <AdminRoute />,
       children: [
-        { path: '/admin',       element: <AdminDashboardPage /> },
-        { path: '/admin/decks', element: <AdminDecksPage /> },
-        { path: '/admin/users', element: <AdminUsersPage /> },
+        { path: '/admin',                element: <AdminDashboardPage /> },
+        { path: '/admin/classes',        element: <AdminClassesPage /> },
+        { path: '/admin/classes/:id',    element: <AdminClassDetailPage /> },
+        { path: '/admin/users',          element: <AdminUsersPage /> },
       ],
     }],
   },
