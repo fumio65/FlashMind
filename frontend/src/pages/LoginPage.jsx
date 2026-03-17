@@ -108,11 +108,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          {/* Demo accounts */}
           <div className="mt-8 p-4 bg-muted rounded-lg text-xs text-muted-foreground space-y-1">
             <p className="font-semibold text-foreground">Demo accounts</p>
             <p>Student — juan@example.com / password123</p>
             <p>Admin — admin@example.com / password123</p>
-            <p>Creator — maria@example.com / password123</p>
           </div>
         </div>
       </div>
