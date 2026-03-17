@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -10,7 +10,7 @@ import { Button }         from '@/components/ui/button'
 import { Input }          from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge }          from '@/components/ui/badge'
-import { Plus, Trash2, BookOpen, ArrowLeft } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, ImagePlus, X } from 'lucide-react'
 import { cn }             from '@/lib/utils'
 
 const deckSchema = z.object({
@@ -19,7 +19,62 @@ const deckSchema = z.object({
   isPublic:    z.boolean(),
 })
 
-const emptyCard = () => ({ id: Date.now(), front: '', back: '' })
+const emptyCard = () => ({
+  id:          Date.now(),
+  front:       '',
+  back:        '',
+  frontImage:  null, // base64 preview
+  backImage:   null,
+})
+
+function ImageUploadButton({ image, onUpload, onRemove, side }) {
+  const fileRef = useRef(null)
+
+  const handleChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => onUpload(reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  return (
+    <div>
+      {image ? (
+        <div className="relative mt-2">
+          <img
+            src={image}
+            alt={`${side} image`}
+            className="w-full h-28 object-cover rounded-lg border border-border"
+          />
+          <button
+            type="button"
+            onClick={onRemove}
+            className="absolute top-1.5 right-1.5 bg-destructive text-white rounded-full h-5 w-5 flex items-center justify-center hover:bg-destructive/90 transition-colors"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          className="mt-1.5 w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-border text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+        >
+          <ImagePlus className="h-3.5 w-3.5 shrink-0" />
+          Add image <span className="opacity-60">(optional)</span>
+        </button>
+      )}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleChange}
+      />
+    </div>
+  )
+}
 
 export default function CreateDeckPage() {
   const { id: classId }              = useParams()
@@ -35,6 +90,7 @@ export default function CreateDeckPage() {
 
   const addCard    = () => setCards((prev) => [...prev, emptyCard()])
   const removeCard = (id) => setCards((prev) => prev.filter((c) => c.id !== id))
+
   const updateCard = (id, field, value) =>
     setCards((prev) => prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)))
 
@@ -42,6 +98,8 @@ export default function CreateDeckPage() {
     const validCards = cards.filter((c) => c.front.trim() && c.back.trim())
     submit({ ...data, classId, cards: validCards, isPublic })
   }
+
+  const validCardCount = cards.filter((c) => c.front && c.back).length
 
   return (
     <PageWrapper>
@@ -66,23 +124,35 @@ export default function CreateDeckPage() {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left */}
+
+          {/* Left — Deck Info */}
           <div className="flex flex-col gap-6">
             <Card>
               <CardHeader><CardTitle>Deck Info</CardTitle></CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">Title</label>
-                  <Input {...register('title')} placeholder="e.g. Data Structures & Algorithms" />
-                  {errors.title && <p className="text-destructive text-xs">{errors.title.message}</p>}
+                  <Input
+                    {...register('title')}
+                    placeholder="e.g. Data Structures & Algorithms"
+                  />
+                  {errors.title && (
+                    <p className="text-destructive text-xs">{errors.title.message}</p>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Description <span className="text-muted-foreground text-xs">(optional)</span></label>
-                  <Input {...register('description')} placeholder="What is this deck about?" />
+                  <label className="text-sm font-medium">
+                    Description{' '}
+                    <span className="text-muted-foreground font-normal text-xs">(optional)</span>
+                  </label>
+                  <Input
+                    {...register('description')}
+                    placeholder="What is this deck about?"
+                  />
                 </div>
 
-                {/* Visibility */}
+                {/* Visibility toggle */}
                 <div className="flex items-center justify-between pt-2 border-t">
                   <div>
                     <p className="text-sm font-medium">Make Public</p>
@@ -91,20 +161,26 @@ export default function CreateDeckPage() {
                   <button
                     type="button"
                     onClick={() => { setIsPublic((v) => !v); setValue('isPublic', !isPublic) }}
-                    className={cn('w-11 h-6 rounded-full transition-colors relative', isPublic ? 'bg-primary' : 'bg-muted')}
+                    className={cn(
+                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                      isPublic ? 'bg-primary' : 'bg-muted-foreground/30'
+                    )}
                   >
-                    <span className={cn('absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform', isPublic ? 'translate-x-5' : 'translate-x-0.5')} />
+                    <span className={cn(
+                      'inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform',
+                      isPublic ? 'translate-x-6' : 'translate-x-1'
+                    )} />
                   </button>
                 </div>
               </CardContent>
             </Card>
 
             <Button type="submit" size="lg" disabled={isLoading}>
-              {isLoading ? 'Creating...' : `Create Deck (${cards.filter((c) => c.front && c.back).length} cards)`}
+              {isLoading ? 'Creating...' : `Create Deck (${validCardCount} cards)`}
             </Button>
           </div>
 
-          {/* Right — Cards */}
+          {/* Right — Card editor */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">
@@ -116,10 +192,11 @@ export default function CreateDeckPage() {
               </Button>
             </div>
 
-            <div className="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1">
+            <div className="flex flex-col gap-3 max-h-[680px] overflow-y-auto pr-1">
               {cards.map((card, i) => (
                 <Card key={card.id} className="border">
-                  <CardContent className="p-4 flex flex-col gap-3">
+                  <CardContent className="p-4 flex flex-col gap-4">
+                    {/* Card header */}
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         Card {i + 1}
@@ -134,20 +211,43 @@ export default function CreateDeckPage() {
                         </button>
                       )}
                     </div>
+
+                    {/* Front */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">FRONT (Term)</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Front (Term)
+                      </label>
                       <Input
                         value={card.front}
                         onChange={(e) => updateCard(card.id, 'front', e.target.value)}
                         placeholder="e.g. What is a stack?"
                       />
+                      <ImageUploadButton
+                        image={card.frontImage}
+                        side="front"
+                        onUpload={(img) => updateCard(card.id, 'frontImage', img)}
+                        onRemove={() => updateCard(card.id, 'frontImage', null)}
+                      />
                     </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-dashed border-border" />
+
+                    {/* Back */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-xs font-medium text-muted-foreground">BACK (Definition)</label>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Back (Definition)
+                      </label>
                       <Input
                         value={card.back}
                         onChange={(e) => updateCard(card.id, 'back', e.target.value)}
                         placeholder="e.g. A LIFO data structure..."
+                      />
+                      <ImageUploadButton
+                        image={card.backImage}
+                        side="back"
+                        onUpload={(img) => updateCard(card.id, 'backImage', img)}
+                        onRemove={() => updateCard(card.id, 'backImage', null)}
                       />
                     </div>
                   </CardContent>
