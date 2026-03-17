@@ -3,17 +3,18 @@ import { useProfile }     from '@/features/profile'
 import { PageWrapper }    from '@/components/layout/PageWrapper'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge }          from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button }         from '@/components/ui/button'
 import { Progress }       from '@/components/ui/progress'
 import { Input }          from '@/components/ui/input'
+import { Badge }          from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Link }           from 'react-router-dom'
+import { ClassIcon }      from '@/features/classes/components/ClassIcon'
 import {
   Flame, Trophy, BookOpen, Clock,
   Play, Camera, Plus, ArrowRight,
-  CheckCircle2, Timer,
+  CheckCircle2, Timer, Globe, Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -25,7 +26,7 @@ const ROLE_COLORS = {
 
 export default function ProfilePage() {
   const { data, isLoading }                   = useProfile()
-  const [tab, setTab]                         = useState('decks')
+  const [tab, setTab]                         = useState('subjects')
   const [showEditDialog, setShowEditDialog]   = useState(false)
   const [editName, setEditName]               = useState('')
   const [editUsername, setEditUsername]       = useState('')
@@ -34,7 +35,7 @@ export default function ProfilePage() {
 
   if (isLoading) return <PageWrapper><LoadingSpinner /></PageWrapper>
 
-  const { user, myDecks, mySessions } = data
+  const { user, myClasses, mySessions } = data
   const masteryPct = Math.round((18 / 30) * 100)
 
   const handleOpenEdit = () => {
@@ -101,14 +102,14 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="flex gap-2 pb-1">
-              <Button variant="outline" size="sm" onClick={handleOpenEdit}>
-                Edit Profile
-              </Button>
+              <Button variant="outline" size="sm" onClick={handleOpenEdit}>Edit Profile</Button>
               <Button size="sm" asChild>
-                <Link to="/decks/new"><Plus className="h-3.5 w-3.5 mr-1" />New Deck</Link>
+                <Link to="/classes/new"><Plus className="h-3.5 w-3.5 mr-1" />New Subject</Link>
               </Button>
             </div>
           </div>
+
+          {/* Badges */}
           <div className="flex items-center gap-3 mt-4 flex-wrap">
             <div className="flex items-center gap-1.5 bg-orange-500/10 text-orange-400 border border-orange-500/20 px-3 py-1.5 rounded-full text-sm font-semibold">
               <Flame className="h-3.5 w-3.5" />{user?.studyStreak} day streak
@@ -117,7 +118,7 @@ export default function ProfilePage() {
               <Trophy className="h-3.5 w-3.5" />18 cards mastered
             </div>
             <div className="flex items-center gap-1.5 bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-full text-sm font-semibold">
-              <BookOpen className="h-3.5 w-3.5" />{myDecks.length} decks created
+              <BookOpen className="h-3.5 w-3.5" />{myClasses.length} subjects created
             </div>
           </div>
         </div>
@@ -126,7 +127,7 @@ export default function ProfilePage() {
       {/* ── Stats row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { icon: BookOpen, label: 'My Decks',      value: myDecks.length,    color: 'text-primary',    bg: 'bg-primary/10'    },
+          { icon: BookOpen, label: 'My Subjects',    value: myClasses.length,  color: 'text-primary',    bg: 'bg-primary/10'    },
           { icon: Play,     label: 'Sessions',       value: mySessions.length, color: 'text-purple-400', bg: 'bg-purple-500/10' },
           { icon: Trophy,   label: 'Cards Mastered', value: 18,                color: 'text-yellow-400', bg: 'bg-yellow-500/10' },
           { icon: Flame,    label: 'Day Streak',     value: user?.studyStreak, color: 'text-orange-400', bg: 'bg-orange-500/10' },
@@ -169,21 +170,21 @@ export default function ProfilePage() {
       <div>
         <div className="flex border-b border-border mb-5">
           <button
-            onClick={() => setTab('decks')}
+            onClick={() => setTab('subjects')}
             className={cn(
               'flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors -mb-px',
-              tab === 'decks'
+              tab === 'subjects'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             )}
           >
             <BookOpen className="h-3.5 w-3.5" />
-            My Decks
+            My Subjects
             <span className={cn(
               'text-xs px-1.5 py-0.5 rounded-full font-semibold',
-              tab === 'decks' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+              tab === 'subjects' ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
             )}>
-              {myDecks.length}
+              {myClasses.length}
             </span>
           </button>
           <button
@@ -206,67 +207,53 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* ── My Decks ── */}
-        {tab === 'decks' && (
-          myDecks.length === 0 ? (
+        {/* ── My Subjects ── */}
+        {tab === 'subjects' && (
+          myClasses.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-xl">
               <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p className="mb-3 text-sm">No decks yet.</p>
+              <p className="mb-3 text-sm">No subjects yet.</p>
               <Button asChild size="sm">
-                <Link to="/decks/new"><Plus className="h-3.5 w-3.5 mr-1" />Create your first deck</Link>
+                <Link to="/classes/new"><Plus className="h-3.5 w-3.5 mr-1" />Create your first subject</Link>
               </Button>
             </div>
           ) : (
-            <div className="rounded-xl border border-border overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted/40 border-b border-border">
-                    <th className="text-left px-5 py-3.5 font-semibold text-muted-foreground">Deck</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-muted-foreground">Category</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-muted-foreground">Cards</th>
-                    <th className="text-left px-5 py-3.5 font-semibold text-muted-foreground">Visibility</th>
-                    <th className="px-5 py-3.5" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {myDecks.map((deck) => (
-                    <tr key={deck._id} className="hover:bg-muted/20 transition-colors group">
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-primary/10 rounded-lg shrink-0">
-                            <BookOpen className="h-4 w-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="font-semibold text-foreground leading-snug">{deck.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{deck.description}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-                          {deck.category}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-muted-foreground font-medium">{deck.cards.length}</td>
-                      <td className="px-5 py-4">
-                        <Badge variant={deck.isPublic ? 'default' : 'secondary'} className="text-xs">
-                          {deck.isPublic ? 'Public' : 'Private'}
-                        </Badge>
-                      </td>
-                      <td className="px-5 py-4 text-right">
-                        <Button
-                          size="sm" variant="outline" asChild
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Link to={`/decks/${deck._id}`}>
-                            Study <ArrowRight className="h-3 w-3 ml-1" />
-                          </Link>
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myClasses.map((cls) => (
+                <div
+                  key={cls._id}
+                  className="rounded-2xl overflow-hidden border border-border hover:border-primary/50 hover:shadow-md transition-all group"
+                >
+                  {/* Gradient header */}
+                  <div className={cn('h-20 bg-gradient-to-br flex items-center px-4 gap-3', cls.color)}>
+                    <ClassIcon icon={cls.icon} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm line-clamp-1">{cls.name}</p>
+                      <p className="text-white/70 text-xs flex items-center gap-1 mt-0.5">
+                        {cls.isPublic
+                          ? <><Globe className="h-3 w-3" />Public</>
+                          : <><Lock className="h-3 w-3" />Private</>
+                        }
+                        <span className="mx-1">·</span>
+                        <BookOpen className="h-3 w-3" />
+                        {cls.deckCount} deck{cls.deckCount !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="bg-card p-4 flex flex-col gap-3">
+                    <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem]">
+                      {cls.description || 'No description.'}
+                    </p>
+                    <Button size="sm" className="w-full" asChild>
+                      <Link to={`/classes/${cls._id}`}>
+                        Open Subject <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )
         )}
@@ -351,7 +338,7 @@ export default function ProfilePage() {
           </DialogHeader>
 
           <div className="flex flex-col gap-5 py-2">
-            {/* Avatar upload */}
+            {/* Avatar */}
             <div className="flex flex-col items-center gap-3">
               <div className="relative">
                 <Avatar className="h-20 w-20 border-4 border-card shadow-xl">
@@ -378,7 +365,6 @@ export default function ProfilePage() {
               </p>
             </div>
 
-            {/* Name */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Full Name</label>
               <Input
@@ -388,7 +374,6 @@ export default function ProfilePage() {
               />
             </div>
 
-            {/* Username */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Username</label>
               <div className="relative">
@@ -402,29 +387,20 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Email — read only */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Email</label>
-              <Input
-                value={user?.email ?? ''}
-                disabled
-                className="opacity-50 cursor-not-allowed"
-              />
+              <Input value={user?.email ?? ''} disabled className="opacity-50 cursor-not-allowed" />
               <p className="text-xs text-muted-foreground">Email cannot be changed here.</p>
             </div>
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveProfile}>
-              Save Changes
-            </Button>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>Cancel</Button>
+            <Button onClick={handleSaveProfile}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
     </PageWrapper>
   )
-} 
+}

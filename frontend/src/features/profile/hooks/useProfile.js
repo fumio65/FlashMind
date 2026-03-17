@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore } from '@/features/auth/store/authStore'
-import { MOCK_DECKS, MOCK_SESSIONS } from '@/features/decks/api/decks.api'
+import { getClasses } from '@/features/classes/api/classes'
+import { MOCK_SESSIONS } from '../../decks/api/decks.api'
 
 export function useProfile() {
   const user                      = useAuthStore((s) => s.user)
@@ -8,12 +9,11 @@ export function useProfile() {
   const [data, setData]           = useState(null)
 
   useEffect(() => {
-    setTimeout(() => {
-      const myDecks    = MOCK_DECKS.filter((d) => d.owner._id === user?._id)
-      const mySessions = MOCK_SESSIONS
-      setData({ user, myDecks, mySessions })
-      setIsLoading(false)
-    }, 400)
+    getClasses({ onlyMine: true })
+      .then((myClasses) => {
+        setData({ user, myClasses, mySessions: MOCK_SESSIONS })
+      })
+      .finally(() => setIsLoading(false))
   }, [user])
 
   return { data, isLoading }
