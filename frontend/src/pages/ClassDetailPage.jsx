@@ -370,10 +370,12 @@ export default function ClassDetailPage() {
                     (optional)
                   </span>
                 </label>
-                <Input
+                <textarea
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   placeholder="Topics and lessons covered in this subject"
+                  rows={3}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 placeholder:text-muted-foreground"
                 />
               </div>
 
@@ -469,10 +471,12 @@ export default function ClassDetailPage() {
                   (optional)
                 </span>
               </label>
-              <Input
+              <textarea
                 value={deckDesc}
                 onChange={(e) => setDeckDesc(e.target.value)}
                 placeholder="What does this deck cover?"
+                rows={3}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0 placeholder:text-muted-foreground"
               />
             </div>
 
