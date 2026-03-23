@@ -1,40 +1,47 @@
-import { useState }        from 'react'
-import { useAdminUsers }   from '@/features/admin'
-import { AdminSidebar }    from '@/components/layout/AdminSidebar'
-import { LoadingSpinner }  from '@/components/shared/LoadingSpinner'
-import { Input }           from '@/components/ui/input'
-import { Button }          from '@/components/ui/button'
-import { Badge }           from '@/components/ui/badge'
+import { useState }       from 'react'
+import { useAdminUsers }  from '@/features/admin'
+import { AdminSidebar }   from '@/components/layout/AdminSidebar'
+import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+import { Input }          from '@/components/ui/input'
+import { Button }         from '@/components/ui/button'
+import { Badge }          from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
-import { useDebounce }     from '@/hooks/useDebounce'
-import { Search, Ban, UserX } from 'lucide-react'
-import { cn }              from '@/lib/utils'
+import { useDebounce }    from '@/hooks/useDebounce'
+import { Search, Ban, UserX, UserCheck } from 'lucide-react'
+import { cn }             from '@/lib/utils'
 
 const ROLE_FILTERS   = ['all', 'student', 'admin']
-const STATUS_FILTERS = ['all', 'suspended']
+const STATUS_FILTERS = ['all', 'suspended', 'banned']
 
 const ROLE_COLORS = {
   admin:   'bg-red-100 text-red-700',
   student: 'bg-blue-100 text-blue-700',
 }
 
-export default function AdminUsersPage() {
-  const [query, setQuery]   = useState('')
-  const [role, setRole]     = useState('all')
-  const [status, setStatus] = useState('all')
-  const [toBan, setToBan]   = useState(null)
+const STATUS_COLORS = {
+  active:    'bg-green-500/10 text-green-400 border-green-500/20',
+  suspended: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  banned:    'bg-red-500/10 text-red-400 border-red-500/20',
+}
 
-  const debouncedQuery      = useDebounce(query, 300)
-  const { users, isLoading, toggleSuspend, removeUser } = useAdminUsers({
+export default function AdminUsersPage() {
+  const [query, setQuery]     = useState('')
+  const [role, setRole]       = useState('all')
+  const [status, setStatus]   = useState('all')
+  const [toAction, setToAction] = useState(null) // { type: 'ban'|'unban', user }
+
+  const debouncedQuery        = useDebounce(query, 300)
+  const { users, isLoading, toggleSuspend, removeUser, restoreUser } = useAdminUsers({
     role:   role === 'all' ? '' : role,
-    status: status === 'suspended' ? 'suspended' : '',
+    status: status === 'all' ? '' : status,
     q:      debouncedQuery,
   })
 
-  const confirmBan = async () => {
-    if (!toBan) return
-    await removeUser(toBan._id)
-    setToBan(null)
+  const confirmAction = async () => {
+    if (!toAction) return
+    if (toAction.type === 'ban')   await removeUser(toAction.user._id)
+    if (toAction.type === 'unban') await restoreUser(toAction.user._id)
+    setToAction(null)
   }
 
   return (
@@ -58,7 +65,7 @@ export default function AdminUsersPage() {
           />
         </div>
 
-        {/* Role filter tabs */}
+        {/* Role filter */}
         <div className="flex gap-2 mb-3 flex-wrap">
           {ROLE_FILTERS.map((f) => (
             <button
@@ -76,7 +83,7 @@ export default function AdminUsersPage() {
           ))}
         </div>
 
-        {/* Status filter tabs */}
+        {/* Status filter */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {STATUS_FILTERS.map((f) => (
             <button
@@ -89,7 +96,7 @@ export default function AdminUsersPage() {
                   : 'bg-background text-muted-foreground border-border hover:border-destructive hover:text-destructive'
               )}
             >
-              {f === 'all' ? 'All Status' : 'Suspended Only'}
+              {f === 'all' ? 'All Status' : f === 'suspended' ? 'Suspended' : 'Banned'}
             </button>
           ))}
         </div>
@@ -112,13 +119,15 @@ export default function AdminUsersPage() {
                     key={user._id}
                     className={cn(
                       'hover:bg-muted/20 transition-colors',
-                      user.status === 'suspended' && 'bg-orange-50/50'
+                      user.status === 'suspended' && 'bg-orange-50/5',
+                      user.status === 'banned'    && 'bg-red-50/5',
                     )}
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-foreground">{user.name}</p>
                       <p className="text-xs text-muted-foreground">@{user.username} · {user.email}</p>
                     </td>
+
                     <td className="px-4 py-3">
                       <span className={cn(
                         'text-xs font-semibold px-2.5 py-1 rounded-full capitalize',
@@ -127,45 +136,60 @@ export default function AdminUsersPage() {
                         {user.role}
                       </span>
                     </td>
+
                     <td className="px-4 py-3">
-                      <Badge
-                        variant={user.status === 'suspended' ? 'destructive' : 'outline'}
-                        className="text-xs capitalize"
-                      >
+                      <span className={cn(
+                        'text-xs font-semibold px-2.5 py-1 rounded-full border capitalize',
+                        STATUS_COLORS[user.status] ?? 'bg-muted text-muted-foreground'
+                      )}>
                         {user.status}
-                      </Badge>
+                      </span>
                     </td>
+
                     <td className="px-4 py-3 text-muted-foreground text-xs">
                       {new Date(user.createdAt).toLocaleDateString('en-PH', {
                         month: 'short', day: 'numeric', year: 'numeric'
                       })}
                     </td>
+
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
-                        {/* Suspend / Restore */}
-                        {user.role !== 'admin' && (
-                          <Button
-                            size="sm" variant="ghost"
-                            className={cn(
-                              'text-xs',
-                              user.status === 'suspended'
-                                ? 'text-green-600 hover:text-green-700 hover:bg-green-50'
-                                : 'text-orange-500 hover:text-orange-600 hover:bg-orange-50'
-                            )}
-                            onClick={() => toggleSuspend(user._id)}
-                          >
-                            <Ban className="h-3.5 w-3.5 mr-1" />
-                            {user.status === 'suspended' ? 'Restore' : 'Suspend'}
-                          </Button>
+                        {user.role !== 'admin' && user.status !== 'banned' && (
+                          <>
+                            {/* Suspend / Restore */}
+                            <Button
+                              size="sm" variant="ghost"
+                              className={cn(
+                                'text-xs',
+                                user.status === 'suspended'
+                                  ? 'text-green-600 hover:text-green-700 hover:bg-green-50'
+                                  : 'text-orange-500 hover:text-orange-600 hover:bg-orange-50'
+                              )}
+                              onClick={() => toggleSuspend(user._id)}
+                            >
+                              <Ban className="h-3.5 w-3.5 mr-1" />
+                              {user.status === 'suspended' ? 'Restore' : 'Suspend'}
+                            </Button>
+
+                            {/* Ban */}
+                            <Button
+                              size="sm" variant="ghost"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
+                              onClick={() => setToAction({ type: 'ban', user })}
+                            >
+                              <UserX className="h-3.5 w-3.5 mr-1" />Ban
+                            </Button>
+                          </>
                         )}
-                        {/* Ban */}
-                        {user.role !== 'admin' && (
+
+                        {/* Unban */}
+                        {user.role !== 'admin' && user.status === 'banned' && (
                           <Button
                             size="sm" variant="ghost"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 text-xs"
-                            onClick={() => setToBan(user)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 text-xs"
+                            onClick={() => setToAction({ type: 'unban', user })}
                           >
-                            <UserX className="h-3.5 w-3.5 mr-1" />Ban
+                            <UserCheck className="h-3.5 w-3.5 mr-1" />Unban
                           </Button>
                         )}
                       </div>
@@ -178,21 +202,74 @@ export default function AdminUsersPage() {
         )}
       </main>
 
-      {/* Confirm ban dialog */}
-      <Dialog open={!!toBan} onOpenChange={() => setToBan(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ban User</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Are you sure you want to permanently ban{' '}
-            <span className="font-semibold text-foreground">{toBan?.name}</span>{' '}
-            (@{toBan?.username})? This will remove their account and cannot be undone.
-          </p>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setToBan(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={confirmBan}>Ban User</Button>
-          </DialogFooter>
+      {/* ── Ban confirmation dialog ── */}
+      <Dialog open={toAction?.type === 'ban'} onOpenChange={() => setToAction(null)}>
+        <DialogContent className="max-w-sm p-0 overflow-hidden">
+          <div className="bg-destructive/10 border-b border-destructive/20 px-6 py-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-destructive/15 rounded-xl">
+                <UserX className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-destructive">Ban User</DialogTitle>
+                <p className="text-xs text-destructive/70 mt-0.5">This will restrict their access</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-5">
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to ban{' '}
+              <span className="font-semibold text-foreground">{toAction?.user?.name}</span>{' '}
+              (@{toAction?.user?.username})?
+            </p>
+            <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border border-border text-xs text-muted-foreground">
+              <UserX className="h-4 w-4 shrink-0 text-destructive" />
+              <p>They will lose access to FlashMind. You can unban them later.</p>
+            </div>
+          </div>
+          <div className="px-6 py-4 border-t border-border flex justify-end gap-2 bg-muted/20">
+            <Button variant="outline" onClick={() => setToAction(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmAction}>
+              <UserX className="h-4 w-4 mr-1.5" />Ban User
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Unban confirmation dialog ── */}
+      <Dialog open={toAction?.type === 'unban'} onOpenChange={() => setToAction(null)}>
+        <DialogContent className="max-w-sm p-0 overflow-hidden">
+          <div className="bg-green-500/10 border-b border-green-500/20 px-6 py-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-500/15 rounded-xl">
+                <UserCheck className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-green-500">Unban User</DialogTitle>
+                <p className="text-xs text-green-500/70 mt-0.5">Restore their access to FlashMind</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 py-5">
+            <p className="text-sm text-muted-foreground mb-4">
+              Are you sure you want to unban{' '}
+              <span className="font-semibold text-foreground">{toAction?.user?.name}</span>{' '}
+              (@{toAction?.user?.username})?
+            </p>
+            <div className="flex items-center gap-3 p-3 bg-muted/40 rounded-lg border border-border text-xs text-muted-foreground">
+              <UserCheck className="h-4 w-4 shrink-0 text-green-500" />
+              <p>They will regain full access to FlashMind as a student.</p>
+            </div>
+          </div>
+          <div className="px-6 py-4 border-t border-border flex justify-end gap-2 bg-muted/20">
+            <Button variant="outline" onClick={() => setToAction(null)}>Cancel</Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={confirmAction}
+            >
+              <UserCheck className="h-4 w-4 mr-1.5" />Unban User
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
