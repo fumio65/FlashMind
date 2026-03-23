@@ -97,6 +97,10 @@
   border-color: var(--color-border);
 }
 
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
