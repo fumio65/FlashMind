@@ -17,6 +17,7 @@ import AdminDashboardPage from '@/pages/AdminDashboardPage'
 import AdminUsersPage     from '@/pages/AdminUsersPage'
 import AdminClassesPage   from '@/pages/AdminClassesPage'
 import AdminClassDetailPage from '@/pages/AdminClassDetailPage'
+import AddCardsPage       from '@/pages/AddCardsPage'
 
 export const router = createBrowserRouter([
   { path: '/',         element: <LandingPage /> },
@@ -31,6 +32,7 @@ export const router = createBrowserRouter([
       { path: '/classes/new',            element: <CreateClassPage /> },
       { path: '/classes/:id',            element: <ClassDetailPage /> },
       { path: '/classes/:id/decks/new',  element: <CreateDeckPage /> },
+      { path: '/decks/:id/cards/add',    element: <AddCardsPage /> },
       { path: '/decks/:id',              element: <DeckDetailPage /> },
       { path: '/study/:id',              element: <StudyPage /> },
       { path: '/profile',                element: <ProfilePage /> },
