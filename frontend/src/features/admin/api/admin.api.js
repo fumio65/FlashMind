@@ -64,3 +64,4 @@ export const deleteAdminDeck = (id)       => new Promise((r) => setTimeout(() =>
 export const updateUserRole  = (id, role) => new Promise((r) => setTimeout(() => r({ success: true }), 400))
 export const suspendUser     = (id)       => new Promise((r) => setTimeout(() => r({ success: true }), 400))
 export const banUser         = (id)       => new Promise((r) => setTimeout(() => r({ success: true }), 400))
+export const unbanUser       = (id)       => new Promise((r) => setTimeout(() => r({ success: true }), 400))
