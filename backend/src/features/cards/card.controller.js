@@ -6,17 +6,22 @@ export const updateCard = async (req, res) => {
   const card = await Card.findById(req.params.id)
   if (!card) return res.status(404).json({ message: 'Card not found' })
 
-  // Verify ownership via deck
   const deck = await Deck.findById(card.deck)
-  if (deck.owner.toString() !== req.user._id.toString()) {
+  if (!deck) return res.status(404).json({ message: 'Deck not found' })
+
+  if (deck.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Not authorized' })
   }
 
   const { front, back, frontImage, backImage } = req.body
-  Object.assign(card, { front, back, frontImage, backImage })
-  await card.save()
 
-  res.json(card)
+  const updated = await Card.findByIdAndUpdate(
+    req.params.id,
+    { $set: { front, back, frontImage, backImage } },
+    { returnDocument: 'after', runValidators: true }
+  )
+
+  res.json(updated)
 }
 
 // DELETE /api/cards/:id
@@ -25,6 +30,8 @@ export const deleteCard = async (req, res) => {
   if (!card) return res.status(404).json({ message: 'Card not found' })
 
   const deck = await Deck.findById(card.deck)
+  if (!deck) return res.status(404).json({ message: 'Deck not found' })
+
   if (deck.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Not authorized' })
   }

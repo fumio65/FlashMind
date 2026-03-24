@@ -11,14 +11,17 @@ import { Progress }        from '@/components/ui/progress'
 import { Plus, BookOpen, Trophy, Clock, Flame } from 'lucide-react'
 
 export default function DashboardPage() {
-  const user               = useAuthStore((s) => s.user)
-  const { stats, isLoading } = useDashboard()
+  const user                 = useAuthStore((s) => s.user)
+  const { data, isLoading }  = useDashboard()
 
   if (isLoading) return <PageWrapper><LoadingSpinner /></PageWrapper>
 
-  const mastery = stats?.cardsMastered
-    ? Math.round((stats.cardsMastered / 30) * 100)
-    : 0
+  const myClasses    = data?.myClasses    ?? []
+  const weeklyActivity = data?.weeklyActivity ?? []
+  const studyStreak  = data?.studyStreak  ?? 0
+  const cardsMastered= data?.cardsMastered ?? 0
+  const totalSessions= data?.totalSessions ?? 0
+  const mastery      = data?.mastery      ?? 0
 
   return (
     <PageWrapper>
@@ -38,10 +41,10 @@ export default function DashboardPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { icon: Flame,    label: 'Study Streak',   value: `${stats?.studyStreak ?? 0} days`,  color: 'text-orange-500' },
-          { icon: Trophy,   label: 'Cards Mastered', value: stats?.cardsMastered ?? 0,           color: 'text-yellow-500' },
-          { icon: BookOpen, label: 'Total Sessions', value: stats?.totalSessions ?? 0,           color: 'text-blue-500'   },
-          { icon: Clock,    label: 'Mastery',        value: `${mastery}%`,                       color: 'text-green-500'  },
+          { icon: Flame,    label: 'Study Streak',   value: `${studyStreak} days`, color: 'text-orange-500' },
+          { icon: Trophy,   label: 'Cards Mastered', value: cardsMastered,         color: 'text-yellow-500' },
+          { icon: BookOpen, label: 'Total Sessions', value: totalSessions,         color: 'text-blue-500'   },
+          { icon: Clock,    label: 'Mastery',        value: `${mastery}%`,         color: 'text-green-500'  },
         ].map(({ icon: Icon, label, value, color }) => (
           <Card key={label}>
             <CardContent className="p-5 flex items-center gap-4">
@@ -64,7 +67,7 @@ export default function DashboardPage() {
             <CardTitle className="text-base font-semibold">Weekly Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <ActivityChart data={stats?.weeklyActivity ?? []} />
+            <ActivityChart data={weeklyActivity} />
           </CardContent>
         </Card>
 
@@ -80,14 +83,14 @@ export default function DashboardPage() {
             </div>
             <Progress value={mastery} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{stats?.cardsMastered ?? 0} known</span>
+              <span>{cardsMastered} known</span>
               <span>30 total</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Recent Classes */}
+      {/* My Classes */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-foreground">My Classes</h2>
@@ -95,17 +98,20 @@ export default function DashboardPage() {
             <Link to="/browse">Browse all →</Link>
           </Button>
         </div>
-        {stats?.recentClasses?.length === 0 ? (
+
+        {myClasses.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground border border-dashed border-border rounded-2xl">
             <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
             <p className="mb-3 text-sm">No classes yet.</p>
             <Button asChild size="sm">
-              <Link to="/classes/new"><Plus className="h-3.5 w-3.5 mr-1" />Create your first class</Link>
+              <Link to="/classes/new">
+                <Plus className="h-3.5 w-3.5 mr-1" />Create your first class
+              </Link>
             </Button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {stats?.recentClasses?.map((cls) => (
+            {myClasses.map((cls) => (
               <ClassCard key={cls._id} cls={cls} />
             ))}
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { useForm }             from 'react-hook-form'
 import { zodResolver }         from '@hookform/resolvers/zod'
@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { CLASS_COLORS }        from '@/features/classes/api/classes'
 import { cn }                  from '@/lib/utils'
-import { ArrowLeft, AlertTriangle, Check } from 'lucide-react'
+import { ArrowLeft, AlertTriangle } from 'lucide-react'
 
 const schema = z.object({
   name:        z.string().min(2, 'Name must be at least 2 characters'),
@@ -22,21 +22,30 @@ const schema = z.object({
 })
 
 export default function CreateClassPage() {
-  const navigate                          = useNavigate()
-  const { submit, isLoading, error }      = useCreateClass()
-  const [icon, setIcon]                   = useState({ type: 'emoji', value: '📚' })
-  const [color, setColor]                 = useState(CLASS_COLORS[0].value)
-  const [isPublic, setIsPublic]           = useState(false)
-  const [previewName, setPreviewName]     = useState('')
+  const navigate                                = useNavigate()
+  const { submit, isLoading, error }            = useCreateClass()
+  const [icon, setIcon]                         = useState({ type: 'emoji', value: '📚' })
+  const [color, setColor]                       = useState(CLASS_COLORS[0].value)
+  const [isPublic, setIsPublic]                 = useState(false)
+  const [previewName, setPreviewName]           = useState('')
   const [showLeaveWarning, setShowLeaveWarning] = useState(false)
 
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
+  // Refs to always have latest values in keyboard handlers
+  const iconRef     = useRef(icon)
+  const colorRef    = useRef(color)
+  const isPublicRef = useRef(isPublic)
+
+  useEffect(() => { iconRef.current     = icon     }, [icon])
+  useEffect(() => { colorRef.current    = color    }, [color])
+  useEffect(() => { isPublicRef.current = isPublic }, [isPublic])
+
+  const { register, handleSubmit, setValue, getValues, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { isPublic: false },
   })
 
   const onSubmit = (data) => {
-    submit({ ...data, icon, color, isPublic })
+    submit({ ...data, icon: iconRef.current, color: colorRef.current, isPublic: isPublicRef.current })
   }
 
   // Esc → show leave warning
@@ -52,13 +61,20 @@ export default function CreateClassPage() {
     return () => window.removeEventListener('keydown', handler, true)
   }, [showLeaveWarning])
 
-  // Ctrl+S → submit form
+  // Ctrl+S → submit form using latest refs
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault()
         if (showLeaveWarning) return
-        handleSubmit(onSubmit)()
+        handleSubmit((data) => {
+          submit({
+            ...data,
+            icon:     iconRef.current,
+            color:    colorRef.current,
+            isPublic: isPublicRef.current,
+          })
+        })()
       }
     }
     window.addEventListener('keydown', handler, true)
@@ -165,18 +181,20 @@ export default function CreateClassPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => { setIsPublic((v) => !v); setValue('isPublic', !isPublic) }}
+                  onClick={() => {
+                    const next = !isPublic
+                    setIsPublic(next)
+                    setValue('isPublic', next)
+                  }}
                   className={cn(
                     'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
                     isPublic ? 'bg-primary' : 'bg-muted-foreground/30'
                   )}
                 >
-                  <span
-                    className={cn(
-                      'inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform',
-                      isPublic ? 'translate-x-6' : 'translate-x-1'
-                    )}
-                  />
+                  <span className={cn(
+                    'inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform',
+                    isPublic ? 'translate-x-6' : 'translate-x-1'
+                  )} />
                 </button>
               </div>
             </CardContent>
@@ -268,7 +286,6 @@ export default function CreateClassPage() {
           </div>
         </DialogContent>
       </Dialog>
-
     </PageWrapper>
   )
 }

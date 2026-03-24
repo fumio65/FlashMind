@@ -15,5 +15,5 @@ export function useDeck(id) {
       .finally(() => setIsLoading(false))
   }, [id])
 
-  return { deck, isLoading, error }
+  return { deck, isLoading, error, setDeck }
 }

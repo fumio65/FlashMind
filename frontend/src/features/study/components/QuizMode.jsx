@@ -6,10 +6,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { cn }           from '@/lib/utils'
 import { RotateCcw, ArrowLeft, ArrowRight, Clock } from 'lucide-react'
+import { saveSession }  from '@/features/classes/api/classes'
 
 export function QuizMode({ deck }) {
   const [showRestartDialog, setShowRestartDialog] = useState(false)
   const [showExitDialog, setShowExitDialog]       = useState(false)
+  const [sessionSaved, setSessionSaved]           = useState(false)
   const navigate                                  = useNavigate()
   const handleConfirmRestartRef                   = useRef(null)
 
@@ -23,6 +25,7 @@ export function QuizMode({ deck }) {
 
   const handleConfirmRestart = () => {
     setShowRestartDialog(false)
+    setSessionSaved(false)
     restart()
   }
 
@@ -30,6 +33,20 @@ export function QuizMode({ deck }) {
   useEffect(() => {
     handleConfirmRestartRef.current = handleConfirmRestart
   })
+
+  // Save session when complete
+  useEffect(() => {
+    if (!isComplete || sessionSaved) return
+    setSessionSaved(true)
+    const pct = Math.round((score / total) * 100)
+    saveSession({
+      deckId:     deck._id,
+      mode:       'quiz',
+      score:      pct,
+      knownCount: score,
+      timeTaken:  0,
+    }).catch(console.error)
+  }, [isComplete])
 
   // Keyboard shortcuts — study screen
   useEffect(() => {
@@ -91,7 +108,7 @@ export function QuizMode({ deck }) {
   useEffect(() => {
     if (!isComplete) return
     const handler = (e) => {
-      if (e.key === 'r' || e.key === 'R') restart()
+      if (e.key === 'r' || e.key === 'R') { setSessionSaved(false); restart() }
       if (e.key === 'Escape')             navigate(`/decks/${deck._id}`)
     }
     window.addEventListener('keydown', handler)
@@ -112,7 +129,7 @@ export function QuizMode({ deck }) {
           <p className="text-muted-foreground">{score} out of {total} correct</p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={restart} variant="outline">
+          <Button onClick={() => { setSessionSaved(false); restart() }} variant="outline">
             <RotateCcw className="h-4 w-4 mr-2" />Try Again
             <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-70">R</kbd>
           </Button>

@@ -1,26 +1,40 @@
-import { useState, useRef } from "react";
-import { cn } from "@/lib/utils";
-import { CLASS_ICONS } from "@/features/classes/api/classes";
+import { useState, useRef, useEffect } from "react";
+import { cn }           from "@/lib/utils";
+import { CLASS_ICONS }  from "@/features/classes/api/classes";
 import * as LucideIcons from "lucide-react";
-import { Upload, ImageIcon } from "lucide-react";
+import { Upload }       from "lucide-react";
 
 const TABS = ["emoji", "icons", "upload"];
 
 export function IconPicker({ value, onChange }) {
-  const [tab, setTab] = useState("emoji");
-  const [preview, setPreview] = useState(null);
-  const fileRef = useRef(null);
+  const [tab, setTab]         = useState("emoji")
+  const [preview, setPreview] = useState(null)
+  const fileRef               = useRef(null)
+
+  // Sync preview with incoming value (fixes edit dialog + tab switching)
+  useEffect(() => {
+    if (value?.type === 'image' && value?.value) {
+      setPreview(value.value)
+      setTab('upload')
+    }
+  }, [value?.type, value?.value])
 
   const handleUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
     reader.onload = () => {
-      setPreview(reader.result);
-      onChange({ type: "image", value: reader.result });
-    };
-    reader.readAsDataURL(file);
-  };
+      setPreview(reader.result)
+      onChange({ type: "image", value: reader.result })
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveImage = () => {
+    setPreview(null)
+    onChange({ type: 'emoji', value: '📚' })
+    if (fileRef.current) fileRef.current.value = ''
+  }
 
   return (
     <div className="border border-border rounded-xl overflow-hidden">
@@ -38,11 +52,7 @@ export function IconPicker({ value, onChange }) {
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            {t === "emoji"
-              ? "😊 Emoji"
-              : t === "icons"
-                ? "🎨 Icons"
-                : "📷 Upload"}
+            {t === "emoji" ? "😊 Emoji" : t === "icons" ? "🎨 Icons" : "📷 Upload"}
           </button>
         ))}
       </div>
@@ -72,8 +82,8 @@ export function IconPicker({ value, onChange }) {
       {tab === "icons" && (
         <div className="p-3 grid grid-cols-6 gap-2">
           {CLASS_ICONS.lucide.map((iconName) => {
-            const Icon = LucideIcons[iconName];
-            if (!Icon) return null;
+            const Icon = LucideIcons[iconName]
+            if (!Icon) return null
             return (
               <button
                 key={iconName}
@@ -91,7 +101,7 @@ export function IconPicker({ value, onChange }) {
                   {iconName}
                 </span>
               </button>
-            );
+            )
           })}
         </div>
       )}
@@ -108,10 +118,7 @@ export function IconPicker({ value, onChange }) {
               />
               <button
                 type="button"
-                onClick={() => {
-                  setPreview(null);
-                  onChange(null);
-                }}
+                onClick={handleRemoveImage}
                 className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full h-5 w-5 text-xs flex items-center justify-center"
               >
                 ×
@@ -135,10 +142,10 @@ export function IconPicker({ value, onChange }) {
             onChange={handleUpload}
           />
           <p className="text-[10px] text-muted-foreground text-center">
-            Image hosting available in Phase B
+            Image stored as base64 · Max 5MB recommended
           </p>
         </div>
       )}
     </div>
-  );
+  )
 }

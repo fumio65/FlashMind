@@ -6,12 +6,7 @@ import { StudySession } from '../../models/StudySession.js'
 
 // GET /api/admin/stats
 export const getAdminStats = async (req, res) => {
-  const [
-    totalUsers,
-    totalClasses,
-    totalDecks,
-    totalSessions,
-  ] = await Promise.all([
+  const [totalUsers, totalClasses, totalDecks, totalSessions] = await Promise.all([
     User.countDocuments(),
     Class.countDocuments(),
     Deck.countDocuments(),
@@ -28,7 +23,9 @@ export const getAdminStats = async (req, res) => {
     totalClasses,
     totalDecks,
     totalSessions,
+    flaggedDecks: 0,  // Phase B+: implement reporting feature
     recentUsers,
+    flagged: [],      // Phase B+: implement reporting feature
   })
 }
 

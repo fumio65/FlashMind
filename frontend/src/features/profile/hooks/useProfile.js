@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { useAuthStore } from '@/features/auth/store/authStore'
-import { getClasses } from '@/features/classes/api/classes'
-import { MOCK_SESSIONS } from '../../decks/api/decks.api'
+import { useAuthStore }  from '@/features/auth/store/authStore'
+import { getClasses }    from '@/features/classes/api/classes'
+import api               from '@/lib/axios'
 
 export function useProfile() {
   const user                      = useAuthStore((s) => s.user)
@@ -9,9 +9,17 @@ export function useProfile() {
   const [data, setData]           = useState(null)
 
   useEffect(() => {
-    getClasses({ onlyMine: true })
-      .then((myClasses) => {
-        setData({ user, myClasses, mySessions: MOCK_SESSIONS })
+    setIsLoading(true)
+    Promise.all([
+      getClasses({ onlyMine: true }),
+      api.get('/sessions/me').then((r) => r.data),
+    ])
+      .then(([myClasses, sessionData]) => {
+        setData({
+          user,
+          myClasses,
+          mySessions: sessionData.sessions,
+        })
       })
       .finally(() => setIsLoading(false))
   }, [user])

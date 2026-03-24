@@ -7,14 +7,14 @@ export function useCreateDeck() {
   const [error, setError]         = useState(null)
   const navigate                  = useNavigate()
 
-  const submit = async (data) => {
+  const submit = async ({ classId, title, description, isPublic, cards }) => {
     setIsLoading(true)
     setError(null)
     try {
-      const deck = await createDeck(data)
+      const deck = await createDeck({ classId, title, description, isPublic, cards })
       navigate(`/decks/${deck._id}`)
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.message ?? 'Failed to create deck')
     } finally {
       setIsLoading(false)
     }
