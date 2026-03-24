@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/features/auth/store/authStore'
-import { registerUser } from '@/features/auth/api/auth.api'
+import { useAuthStore } from '../store/authStore'
+import { registerUser } from '../api/auth.api'
 
 export function useRegister() {
-  const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  const setAuth = useAuthStore((s) => s.setAuth)
-  const navigate = useNavigate()
+  const [error, setError]         = useState(null)
+  const setAuth                   = useAuthStore((s) => s.setAuth)
+  const navigate                  = useNavigate()
 
   const register = async (data) => {
     setIsLoading(true)
@@ -17,7 +17,7 @@ export function useRegister() {
       setAuth({ token, user })
       navigate('/dashboard')
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.message ?? 'Registration failed')
     } finally {
       setIsLoading(false)
     }

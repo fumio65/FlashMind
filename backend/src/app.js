@@ -11,6 +11,7 @@ import { cardRoutes }    from './features/cards/card.routes.js'
 import { sessionRoutes } from './features/sessions/session.routes.js'
 import { uploadRoutes }  from './features/upload/upload.routes.js'
 import { adminRoutes }   from './features/admin/admin.routes.js'
+import { ratingRoutes }  from './features/ratings/rating.routes.js'
 
 const app = express()
 
@@ -30,6 +31,7 @@ app.use('/api/classes',  classRoutes)
 app.use('/api/decks',    deckRoutes)
 app.use('/api/cards',    cardRoutes)
 app.use('/api/sessions', sessionRoutes)
+app.use('/api/ratings', ratingRoutes)
 app.use('/api/upload',   uploadRoutes)
 app.use('/api/admin',    adminRoutes)
 

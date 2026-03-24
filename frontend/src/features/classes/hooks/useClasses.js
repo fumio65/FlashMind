@@ -14,5 +14,5 @@ export function useClasses(filters = {}) {
       .finally(() => setIsLoading(false))
   }, [filters.q, filters.onlyMine])
 
-  return { classes, isLoading, error }
+  return { classes, isLoading, error, setClasses }
 }

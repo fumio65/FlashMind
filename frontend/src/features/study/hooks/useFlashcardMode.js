@@ -26,18 +26,29 @@ export const BADGE_COLORS = {
 }
 
 export function useFlashcardMode(allCards = [], previousRatings = {}) {
-  const [queue, setQueue]               = useState(() => buildReviewQueue(allCards, previousRatings))
+  const [queue, setQueue]               = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped]       = useState(false)
   const [ratings, setRatings]           = useState([])
   const [isComplete, setIsComplete]     = useState(false)
+  const [queueBuilt, setQueueBuilt]     = useState(false)
 
-  // Lock ref — prevents any input while transitioning
-  const isLocked = useRef(false)
+  const isLocked       = useRef(false)
+  const onNavigateBack = useRef(null)
+  const onRestartStudy = useRef(null)
 
-  // Callback refs for Esc/R shortcuts — set by the component
-  const onNavigateBack   = useRef(null)
-  const onRestartStudy   = useRef(null)
+  // Rebuild queue whenever previousRatings changes (i.e. after DB load)
+  // Only rebuild if we haven't started rating yet (currentIndex === 0 and no ratings)
+  useEffect(() => {
+    if (allCards.length === 0) return
+    const newQueue = buildReviewQueue(allCards, previousRatings)
+    setQueue(newQueue)
+    setCurrentIndex(0)
+    setIsFlipped(false)
+    setRatings([])
+    setIsComplete(false)
+    setQueueBuilt(true)
+  }, [previousRatings])
 
   const currentCard = queue[currentIndex]
   const prevRating  = currentCard ? previousRatings[currentCard._id] : null
@@ -51,7 +62,6 @@ export function useFlashcardMode(allCards = [], previousRatings = {}) {
   const rate = useCallback((value) => {
     if (isLocked.current || !currentCard) return
 
-    // Lock immediately — nothing can fire until unlock
     isLocked.current = true
 
     setRatings((prev) => [...prev, { cardId: currentCard._id, value }])
@@ -65,7 +75,6 @@ export function useFlashcardMode(allCards = [], previousRatings = {}) {
         }
         return next < queue.length ? next : i
       })
-      // Unlock after transition completes
       setTimeout(() => {
         isLocked.current = false
       }, 100)
@@ -86,9 +95,9 @@ export function useFlashcardMode(allCards = [], previousRatings = {}) {
   useEffect(() => {
     const handler = (e) => {
       if (isComplete) return
-      if (e.code === 'Space')            { e.preventDefault(); flip() }
-      if (e.key >= '1' && e.key <= '5') rate(Number(e.key))
-      if (e.key === 'Escape')            onNavigateBack.current?.()
+      if (e.code === 'Space')             { e.preventDefault(); flip() }
+      if (e.key >= '1' && e.key <= '5')  rate(Number(e.key))
+      if (e.key === 'Escape')             onNavigateBack.current?.()
       if (e.key === 'r' || e.key === 'R') onRestartStudy.current?.()
     }
     window.addEventListener('keydown', handler)
@@ -108,10 +117,9 @@ export function useFlashcardMode(allCards = [], previousRatings = {}) {
   return {
     currentCard, currentIndex, isFlipped, flip, rate, restart,
     ratings, ratingMap, known, stillLearning, hard,
-    avgScore, isComplete, prevLevel,
-    total: queue.length,
+    avgScore, isComplete, prevLevel, queueBuilt,
+    total:       queue.length,
     uniqueTotal: allCards.length,
-    // Expose refs so component can wire up Esc/R callbacks
     onNavigateBack,
     onRestartStudy,
   }

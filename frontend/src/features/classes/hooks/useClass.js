@@ -16,5 +16,5 @@ export function useClass(id) {
       .finally(() => setIsLoading(false))
   }, [id])
 
-  return { cls, decks, isLoading, error }
+  return { cls, decks, isLoading, error, setCls, setDecks }
 }

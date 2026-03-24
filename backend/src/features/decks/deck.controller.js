@@ -3,12 +3,21 @@ import { Card }  from '../../models/Card.js'
 import { Class } from '../../models/Class.js'
 
 // GET /api/decks/:id
+// GET /api/decks/:id
 export const getDeck = async (req, res) => {
   const deck = await Deck.findById(req.params.id)
     .populate('owner', 'username avatar')
     .populate('class', 'name color icon')
 
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
+
+  // Block access to private decks for non-owners (admins can always see)
+  const isOwner = deck.owner._id.toString() === req.user._id.toString()
+  const isAdmin = req.user.role === 'admin'
+
+  if (!deck.isPublic && !isOwner && !isAdmin) {
+    return res.status(403).json({ message: 'This deck is private' })
+  }
 
   const cards = await Card.find({ deck: deck._id }).sort({ createdAt: 1 })
   res.json({ ...deck.toJSON(), cards })
@@ -63,11 +72,15 @@ export const updateDeck = async (req, res) => {
   }
 
   const { title, description, isPublic } = req.body
-  Object.assign(deck, { title, description, isPublic })
-  await deck.save()
 
-  const cards = await Card.find({ deck: deck._id }).sort({ createdAt: 1 })
-  res.json({ ...deck.toJSON(), cards })
+  const updated = await Deck.findByIdAndUpdate(
+    req.params.id,
+    { $set: { title, description, isPublic } },
+    { new: true, runValidators: true }
+  ).populate('owner', 'username avatar')
+
+  const cards = await Card.find({ deck: updated._id }).sort({ createdAt: 1 })
+  res.json({ ...updated.toJSON(), cards })
 }
 
 // DELETE /api/decks/:id

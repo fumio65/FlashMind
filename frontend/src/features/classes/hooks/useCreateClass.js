@@ -14,7 +14,7 @@ export function useCreateClass() {
       const cls = await createClass(data)
       navigate(`/classes/${cls._id}`)
     } catch (err) {
-      setError(err.message)
+      setError(err.response?.data?.message ?? 'Failed to create subject')
     } finally {
       setIsLoading(false)
     }
