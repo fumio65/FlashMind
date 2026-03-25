@@ -86,7 +86,6 @@ function EditClassDialog({
             Update your subject's name, appearance, and visibility.
           </p>
         </div>
-
         <div className="flex flex-1 overflow-hidden">
           <div className="w-56 shrink-0 bg-muted/30 border-r border-border p-5 flex flex-col gap-4">
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -150,7 +149,6 @@ function EditClassDialog({
               </div>
             </div>
           </div>
-
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold text-foreground">
@@ -210,7 +208,6 @@ function EditClassDialog({
             </div>
           </div>
         </div>
-
         <div className="px-6 py-4 border-t border-border shrink-0 flex justify-end gap-2 bg-muted/20">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel{" "}
@@ -239,33 +236,24 @@ export default function ClassDetailPage() {
   const { cls, setCls, decks, setDecks, isLoading, error, refetch } =
     useClass(id);
 
-  // Class edit
   const [showEditClass, setShowEditClass] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editIcon, setEditIcon] = useState(null);
   const [editColor, setEditColor] = useState("");
   const [editPublic, setEditPublic] = useState(false);
-
-  // Class delete
   const [showDeleteClass, setShowDeleteClass] = useState(false);
-
-  // Deck edit
   const [showEditDeck, setShowEditDeck] = useState(false);
   const [editingDeck, setEditingDeck] = useState(null);
   const [deckTitle, setDeckTitle] = useState("");
   const [deckDesc, setDeckDesc] = useState("");
   const [deckPublic, setDeckPublic] = useState(false);
-
-  // Deck delete
   const [toDeleteDeck, setToDeleteDeck] = useState(null);
 
-  // Refs
   const handleSaveDeckRef = useRef(null);
   const handleDeleteDeckRef = useRef(null);
   const handleDeleteClassRef = useRef(null);
 
-  // Ownership / permission checks — computed after cls loads
   const isOwner = cls
     ? String(cls.owner?._id) === String(currentUser?._id) ||
       String(cls.owner?._id) === String(currentUser?.id) ||
@@ -371,7 +359,6 @@ export default function ClassDetailPage() {
     }
   };
 
-  // Always keep refs fresh
   useEffect(() => {
     handleSaveDeckRef.current = handleSaveDeck;
   });
@@ -382,21 +369,29 @@ export default function ClassDetailPage() {
     handleDeleteClassRef.current = handleDeleteClass;
   });
 
-  // Ctrl+E → open edit class (owner only)
+  // Global shortcuts — only when no dialog is open
   useEffect(() => {
-    if (!canEdit) return;
+    const noDialog =
+      !showEditClass && !showEditDeck && !toDeleteDeck && !showDeleteClass;
     const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "e") {
+      if (!noDialog || !cls) return;
+      // Esc → back to dashboard
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        navigate("/dashboard");
+      }
+      // Ctrl+E → edit class (owner only)
+      if (canEdit && (e.ctrlKey || e.metaKey) && e.key === "e") {
         e.preventDefault();
-        if (
-          !showEditClass &&
-          !showEditDeck &&
-          !toDeleteDeck &&
-          !showDeleteClass &&
-          cls
-        ) {
-          handleOpenEditClass();
-        }
+        handleOpenEditClass();
+      }
+      if (canDelete && e.altKey && e.key === "d") {
+        e.preventDefault();
+        setShowDeleteClass(true);
+      }
+      if (canEdit && e.altKey && e.key === "n") {
+        e.preventDefault();
+        navigate(`/classes/${id}/decks/new`);
       }
     };
     window.addEventListener("keydown", handler, true);
@@ -408,6 +403,7 @@ export default function ClassDetailPage() {
     showDeleteClass,
     cls,
     canEdit,
+    canDelete,
   ]);
 
   // Edit Deck dialog: Esc = close, Ctrl+S = save
@@ -490,6 +486,9 @@ export default function ClassDetailPage() {
         <Link to="/dashboard">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Dashboard
+          <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-60">
+            Esc
+          </kbd>
         </Link>
       </Button>
 
@@ -548,6 +547,9 @@ export default function ClassDetailPage() {
             >
               <Trash2 className="h-3.5 w-3.5 mr-1" />
               Delete
+              <kbd className="ml-1.5 text-[10px] bg-white/10 px-1.5 py-0.5 rounded opacity-70">
+               Alt+D
+              </kbd>
             </Button>
           )}
           {canEdit && (
@@ -559,6 +561,7 @@ export default function ClassDetailPage() {
               <Link to={`/classes/${id}/decks/new`}>
                 <Plus className="h-4 w-4 mr-1" />
                 New Deck
+                <kbd className="ml-1.5 text-[10px] bg-white/10 px-1.5 py-0.5 rounded opacity-70">Alt+N</kbd>
               </Link>
             </Button>
           )}
