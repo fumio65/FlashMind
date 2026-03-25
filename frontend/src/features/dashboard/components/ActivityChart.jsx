@@ -3,6 +3,7 @@ import { useTheme } from 'next-themes'
 
 const CustomTooltip = ({ active, payload, label, dark }) => {
   if (active && payload && payload.length) {
+    const value = payload[0].value
     return (
       <div style={{
         background:   dark ? '#1e2a3a' : '#ffffff',
@@ -13,7 +14,7 @@ const CustomTooltip = ({ active, payload, label, dark }) => {
       }}>
         <p style={{ fontSize: 12, color: dark ? '#94a3b8' : '#64748b', marginBottom: 2 }}>{label}</p>
         <p style={{ fontSize: 13, fontWeight: 600, color: dark ? '#e2e8f0' : '#0f172a' }}>
-          {payload[0].value} cards
+          {value} {value === 1 ? 'session' : 'sessions'}
         </p>
       </div>
     )

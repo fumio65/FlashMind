@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { cn }           from '@/lib/utils'
 import { RotateCcw, ArrowLeft, ArrowRight, Clock } from 'lucide-react'
-import { saveSession }  from '@/features/classes/api/classes'
+import { saveSession, saveRatings } from '@/features/classes/api/classes'
 
 export function QuizMode({ deck }) {
   const [showRestartDialog, setShowRestartDialog] = useState(false)
@@ -14,6 +14,7 @@ export function QuizMode({ deck }) {
   const [sessionSaved, setSessionSaved]           = useState(false)
   const navigate                                  = useNavigate()
   const handleConfirmRestartRef                   = useRef(null)
+  const answeredCorrectly                         = useRef({}) // cardId → boolean
 
   const {
     currentQuestion, currentIndex, selectedOption,
@@ -23,9 +24,18 @@ export function QuizMode({ deck }) {
 
   const progress = Math.round((currentIndex / total) * 100)
 
+  // Wrap answer to track correct/incorrect per card
+  const handleAnswer = (option) => {
+    if (currentQuestion) {
+      answeredCorrectly.current[currentQuestion.id] = !!option.isCorrect
+    }
+    answer(option)
+  }
+
   const handleConfirmRestart = () => {
     setShowRestartDialog(false)
     setSessionSaved(false)
+    answeredCorrectly.current = {}
     restart()
   }
 
@@ -34,11 +44,14 @@ export function QuizMode({ deck }) {
     handleConfirmRestartRef.current = handleConfirmRestart
   })
 
-  // Save session when complete
+  // Save session + ratings when complete
   useEffect(() => {
     if (!isComplete || sessionSaved) return
     setSessionSaved(true)
+
     const pct = Math.round((score / total) * 100)
+
+    // Save study session
     saveSession({
       deckId:     deck._id,
       mode:       'quiz',
@@ -46,6 +59,14 @@ export function QuizMode({ deck }) {
       knownCount: score,
       timeTaken:  0,
     }).catch(console.error)
+
+    // Save card ratings — correct = 4 (Good), wrong/skipped = 2 (Hard)
+    const ratings = deck.cards.map((card) => ({
+      cardId: card._id,
+      rating: answeredCorrectly.current[card._id] ? 5 : 2,
+    }))
+
+    saveRatings(deck._id, ratings).catch(console.error)
   }, [isComplete])
 
   // Keyboard shortcuts — study screen
@@ -53,10 +74,15 @@ export function QuizMode({ deck }) {
     if (isComplete || showRestartDialog || showExitDialog) return
     const handler = (e) => {
       if (!showFeedback && currentQuestion) {
-        const keyMap = { '1': 0, 'a': 0, 'A': 0, '2': 1, 'b': 1, 'B': 1, '3': 2, 'c': 2, 'C': 2, '4': 3, 'd': 3, 'D': 3 }
+        const keyMap = {
+          '1': 0, 'a': 0, 'A': 0,
+          '2': 1, 'b': 1, 'B': 1,
+          '3': 2, 'c': 2, 'C': 2,
+          '4': 3, 'd': 3, 'D': 3,
+        }
         if (keyMap[e.key] !== undefined) {
           const option = currentQuestion.options[keyMap[e.key]]
-          if (option) answer(option)
+          if (option) handleAnswer(option)
         }
       }
       if (showFeedback && (e.code === 'Space' || e.key === 'Enter')) {
@@ -74,14 +100,8 @@ export function QuizMode({ deck }) {
   useEffect(() => {
     if (!showExitDialog) return
     const handler = (e) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation()
-        setShowExitDialog(false)
-      }
-      if (e.key === 'q' || e.key === 'Q') {
-        e.stopPropagation()
-        navigate(`/decks/${deck._id}`)
-      }
+      if (e.key === 'Escape') { e.stopPropagation(); setShowExitDialog(false) }
+      if (e.key === 'q' || e.key === 'Q') { e.stopPropagation(); navigate(`/decks/${deck._id}`) }
     }
     window.addEventListener('keydown', handler, true)
     return () => window.removeEventListener('keydown', handler, true)
@@ -91,14 +111,8 @@ export function QuizMode({ deck }) {
   useEffect(() => {
     if (!showRestartDialog) return
     const handler = (e) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation()
-        setShowRestartDialog(false)
-      }
-      if (e.key === 'r' || e.key === 'R') {
-        e.stopPropagation()
-        handleConfirmRestartRef.current?.()
-      }
+      if (e.key === 'Escape') { e.stopPropagation(); setShowRestartDialog(false) }
+      if (e.key === 'r' || e.key === 'R') { e.stopPropagation(); handleConfirmRestartRef.current?.() }
     }
     window.addEventListener('keydown', handler, true)
     return () => window.removeEventListener('keydown', handler, true)
@@ -108,8 +122,8 @@ export function QuizMode({ deck }) {
   useEffect(() => {
     if (!isComplete) return
     const handler = (e) => {
-      if (e.key === 'r' || e.key === 'R') { setSessionSaved(false); restart() }
-      if (e.key === 'Escape')             navigate(`/decks/${deck._id}`)
+      if (e.key === 'r' || e.key === 'R') { setSessionSaved(false); answeredCorrectly.current = {}; restart() }
+      if (e.key === 'Escape') navigate(`/decks/${deck._id}`)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -129,7 +143,10 @@ export function QuizMode({ deck }) {
           <p className="text-muted-foreground">{score} out of {total} correct</p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => { setSessionSaved(false); restart() }} variant="outline">
+          <Button
+            onClick={() => { setSessionSaved(false); answeredCorrectly.current = {}; restart() }}
+            variant="outline"
+          >
             <RotateCcw className="h-4 w-4 mr-2" />Try Again
             <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-70">R</kbd>
           </Button>
@@ -208,7 +225,7 @@ export function QuizMode({ deck }) {
             <button
               key={i}
               disabled={showFeedback}
-              onClick={() => answer(option)}
+              onClick={() => handleAnswer(option)}
               className={cn(
                 'rounded-xl border-2 p-4 text-sm font-medium text-left transition-all',
                 style,
@@ -299,10 +316,7 @@ export function QuizMode({ deck }) {
       </Dialog>
 
       {/* Restart confirmation dialog */}
-      <Dialog
-        open={showRestartDialog}
-        onOpenChange={(open) => { if (!open) setShowRestartDialog(false) }}
-      >
+      <Dialog open={showRestartDialog} onOpenChange={(open) => { if (!open) setShowRestartDialog(false) }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -331,8 +345,7 @@ export function QuizMode({ deck }) {
               <kbd className="ml-2 text-[10px] bg-muted px-1.5 py-0.5 rounded opacity-70">Esc</kbd>
             </Button>
             <Button onClick={handleConfirmRestart}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Yes, Restart
+              <RotateCcw className="h-4 w-4 mr-2" />Yes, Restart
               <kbd className="ml-2 text-[10px] bg-white/20 px-1.5 py-0.5 rounded opacity-70">R</kbd>
             </Button>
           </DialogFooter>
