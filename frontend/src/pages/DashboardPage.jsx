@@ -11,17 +11,18 @@ import { Progress }        from '@/components/ui/progress'
 import { Plus, BookOpen, Trophy, Clock, Flame } from 'lucide-react'
 
 export default function DashboardPage() {
-  const user                 = useAuthStore((s) => s.user)
-  const { data, isLoading }  = useDashboard()
+  const user                = useAuthStore((s) => s.user)
+  const { data, isLoading } = useDashboard()
 
   if (isLoading) return <PageWrapper><LoadingSpinner /></PageWrapper>
 
-  const myClasses    = data?.myClasses    ?? []
+  const myClasses      = data?.myClasses      ?? []
   const weeklyActivity = data?.weeklyActivity ?? []
-  const studyStreak  = data?.studyStreak  ?? 0
-  const cardsMastered= data?.cardsMastered ?? 0
-  const totalSessions= data?.totalSessions ?? 0
-  const mastery      = data?.mastery      ?? 0
+  const studyStreak    = data?.studyStreak    ?? 0
+  const cardsMastered  = data?.cardsMastered  ?? 0
+  const totalSessions  = data?.totalSessions  ?? 0
+  const totalCards     = data?.totalCards     ?? 0
+  const mastery        = data?.mastery        ?? 0
 
   return (
     <PageWrapper>
@@ -84,7 +85,7 @@ export default function DashboardPage() {
             <Progress value={mastery} className="h-2" />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{cardsMastered} known</span>
-              <span>30 total</span>
+              <span>{totalCards} total</span>
             </div>
           </CardContent>
         </Card>
