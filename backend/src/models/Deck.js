@@ -1,11 +1,36 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../lib/db.js'
 
-const deckSchema = new mongoose.Schema({
-  title:       { type: String, required: true, trim: true },
-  description: { type: String, default: '', trim: true },
-  isPublic:    { type: Boolean, default: false, index: true },
-  class:       { type: mongoose.Schema.Types.ObjectId, ref: 'Class', required: true, index: true },
-  owner:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-}, { timestamps: true })
-
-export const Deck = mongoose.model('Deck', deckSchema)
+export const Deck = sequelize.define('Deck', {
+  id: {
+    type:          DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey:    true,
+  },
+  title: {
+    type:      DataTypes.STRING(150),
+    allowNull: false,
+  },
+  description: {
+    type:         DataTypes.TEXT,
+    defaultValue: '',
+  },
+  isPublic: {
+    type:         DataTypes.BOOLEAN,
+    defaultValue: false,
+    field:        'is_public',
+  },
+  classId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'class_id',
+  },
+  ownerId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'owner_id',
+  },
+}, {
+  tableName:  'decks',
+  timestamps: true,
+})

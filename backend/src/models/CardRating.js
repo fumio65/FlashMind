@@ -1,13 +1,32 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../lib/db.js'
 
-const cardRatingSchema = new mongoose.Schema({
-  user:   { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  card:   { type: mongoose.Schema.Types.ObjectId, ref: 'Card', required: true, index: true },
-  deck:   { type: mongoose.Schema.Types.ObjectId, ref: 'Deck', required: true, index: true },
-  rating: { type: Number, required: true, min: 1, max: 5 },
-}, { timestamps: true })
-
-// One rating per user per card — upsert on save
-cardRatingSchema.index({ user: 1, card: 1 }, { unique: true })
-
-export const CardRating = mongoose.model('CardRating', cardRatingSchema)
+export const CardRating = sequelize.define('CardRating', {
+  id: {
+    type:          DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey:    true,
+  },
+  userId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'user_id',
+  },
+  cardId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'card_id',
+  },
+  deckId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'deck_id',
+  },
+  rating: {
+    type:      DataTypes.TINYINT,
+    allowNull: false,
+  },
+}, {
+  tableName:  'card_ratings',
+  timestamps: true,
+})

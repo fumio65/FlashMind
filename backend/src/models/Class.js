@@ -1,17 +1,45 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../lib/db.js'
 
-const iconSchema = new mongoose.Schema({
-  type:  { type: String, enum: ['emoji', 'lucide', 'image'], required: true },
-  value: { type: String, required: true },
-}, { _id: false })
-
-const classSchema = new mongoose.Schema({
-  name:        { type: String, required: true, trim: true },
-  description: { type: String, default: '', trim: true },
-  icon:        { type: iconSchema, default: { type: 'emoji', value: '📚' } },
-  color:       { type: String, default: 'from-blue-400 to-cyan-400' },
-  isPublic:    { type: Boolean, default: false, index: true },
-  owner:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-}, { timestamps: true })
-
-export const Class = mongoose.model('Class', classSchema)
+export const Class = sequelize.define('Class', {
+  id: {
+    type:          DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey:    true,
+  },
+  name: {
+    type:      DataTypes.STRING(150),
+    allowNull: false,
+  },
+  description: {
+    type:         DataTypes.TEXT,
+    defaultValue: '',
+  },
+  iconType: {
+    type:         DataTypes.ENUM('emoji', 'lucide', 'image'),
+    defaultValue: 'emoji',
+    field:        'icon_type',
+  },
+  iconValue: {
+    type:         DataTypes.TEXT('long'),
+    defaultValue: '📚',
+    field:        'icon_value',
+  },
+  color: {
+    type:         DataTypes.STRING(100),
+    defaultValue: 'from-blue-400 to-cyan-400',
+  },
+  isPublic: {
+    type:         DataTypes.BOOLEAN,
+    defaultValue: false,
+    field:        'is_public',
+  },
+  ownerId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'owner_id',
+  },
+}, {
+  tableName:  'classes',
+  timestamps: true,
+})

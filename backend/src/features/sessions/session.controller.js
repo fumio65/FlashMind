@@ -1,7 +1,6 @@
-import { StudySession } from '../../models/StudySession.js'
-import { Card }         from '../../models/Card.js'
-import { User }         from '../../models/User.js'
-import { CardRating }   from '../../models/CardRating.js'
+import { Op }                          from 'sequelize'
+import { sequelize }                   from '../../lib/db.js'
+import { StudySession, Card, User, CardRating, Deck } from '../../models/index.js'
 
 // POST /api/sessions
 export const saveSession = async (req, res) => {
@@ -12,58 +11,66 @@ export const saveSession = async (req, res) => {
   }
 
   const session = await StudySession.create({
-    user:       req.user._id,
-    deck:       deckId,
+    userId:    req.user.id,
+    deckId,
     mode,
     score:      score      ?? 0,
     knownCount: knownCount ?? 0,
     timeTaken:  timeTaken  ?? 0,
   })
 
-  await updateStreak(req.user._id)
+  await updateStreak(req.user.id)
 
-  await session.populate('deck', 'title')
-  res.status(201).json(session)
+  const full = await StudySession.findByPk(session.id, {
+    include: [{ model: Deck, as: 'deck', attributes: ['id', 'title'] }],
+  })
+
+  res.status(201).json(full.toJSON())
 }
 
 // GET /api/sessions/me
 export const getMySessions = async (req, res) => {
   const page  = parseInt(req.query.page)  || 1
   const limit = parseInt(req.query.limit) || 10
-  const skip  = (page - 1) * limit
+  const offset = (page - 1) * limit
 
-  const [sessions, total] = await Promise.all([
-    StudySession.find({ user: req.user._id })
-      .populate('deck', 'title')
-      .sort({ completedAt: -1 })
-      .skip(skip)
-      .limit(limit),
-    StudySession.countDocuments({ user: req.user._id }),
-  ])
+  const { count, rows } = await StudySession.findAndCountAll({
+    where:   { userId: req.user.id },
+    include: [{ model: Deck, as: 'deck', attributes: ['id', 'title'] }],
+    order:   [['completedAt', 'DESC']],
+    limit,
+    offset,
+  })
 
-  res.json({ sessions, total, page, pages: Math.ceil(total / limit) })
+  res.json({
+    sessions: rows.map((s) => s.toJSON()),
+    total:    count,
+    page,
+    pages:    Math.ceil(count / limit),
+  })
 }
 
 // GET /api/sessions/stats
 export const getMyStats = async (req, res) => {
-  const userId = req.user._id
+  const userId = req.user.id
 
-  const totalSessions = await StudySession.countDocuments({ user: userId })
+  const totalSessions = await StudySession.count({ where: { userId } })
 
-  // Cards mastered — based on latest card ratings (rating >= 4 = Good or Easy)
-  // Uses CardRating which stores one rating per card (upserted on each session)
-  // This prevents cumulative overcounting across multiple sessions
-  const allRatings    = await CardRating.find({ user: userId })
+  // Cards mastered via CardRating
+  const allRatings    = await CardRating.findAll({ where: { userId } })
   const cardsMastered = allRatings.filter((r) => r.rating >= 4).length
 
   // Weekly activity — last 7 days
   const sevenDaysAgo = new Date()
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-  const recentSessions = await StudySession.find({
-    user:        userId,
-    completedAt: { $gte: sevenDaysAgo },
-  }).sort({ completedAt: 1 })
+  const recentSessions = await StudySession.findAll({
+    where: {
+      userId,
+      completedAt: { [Op.gte]: sevenDaysAgo },
+    },
+    order: [['completedAt', 'ASC']],
+  })
 
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const weeklyMap = {}
@@ -76,14 +83,14 @@ export const getMyStats = async (req, res) => {
 
   const weeklyActivity = days.map((day) => ({ day, cards: weeklyMap[day] }))
 
-  // Overall mastery % — capped at 100%
-  const totalCards = await Card.countDocuments()
+  const totalCards = await Card.count()
   const mastery    = totalCards > 0
     ? Math.min(100, Math.round((cardsMastered / totalCards) * 100))
     : 0
 
-  // Get fresh user for streak
-  const user = await User.findById(userId).select('studyStreak lastStudiedAt')
+  const user = await User.findByPk(userId, {
+    attributes: ['studyStreak', 'lastStudiedAt'],
+  })
 
   res.json({
     studyStreak:  user.studyStreak,
@@ -97,24 +104,17 @@ export const getMyStats = async (req, res) => {
 // GET /api/sessions/deck/:deckId
 export const getDeckStats = async (req, res) => {
   const { deckId } = req.params
-  const userId     = req.user._id
+  const userId     = req.user.id
 
-  // Get latest flashcard session for this deck
   const lastSession = await StudySession.findOne({
-    user: userId,
-    deck: deckId,
-    mode: 'flashcard',
-  }).sort({ completedAt: -1 })
+    where:  { userId, deckId, mode: 'flashcard' },
+    order:  [['completedAt', 'DESC']],
+  })
 
-  // Use card ratings — one rating per card, upserted on each session
-  // This ensures mastery reflects current knowledge, not cumulative counts
-  const ratings    = await CardRating.find({ user: userId, deck: deckId })
-  const totalCards = await Card.countDocuments({ deck: deckId })
-
-  // Count cards with rating >= 4 (Good or Easy)
+  const ratings    = await CardRating.findAll({ where: { userId, deckId } })
+  const totalCards = await Card.count({ where: { deckId } })
   const knownCount = ratings.filter((r) => r.rating >= 4).length
 
-  // Cap mastery at 100%
   const mastery = totalCards > 0
     ? Math.min(100, Math.round((knownCount / totalCards) * 100))
     : 0
@@ -130,29 +130,23 @@ export const getDeckStats = async (req, res) => {
 
 // ── Helper: update streak ──
 async function updateStreak(userId) {
-  const user = await User.findById(userId)
+  const user = await User.findByPk(userId)
 
   const now      = new Date()
   const todayStr = now.toDateString()
   const last     = user.lastStudiedAt ? new Date(user.lastStudiedAt) : null
 
-  // Already studied today — don't increment
   if (last && last.toDateString() === todayStr) return
 
   const yesterday = new Date(now)
   yesterday.setDate(yesterday.getDate() - 1)
-  const yesterdayStr = yesterday.toDateString()
 
-  if (last && last.toDateString() === yesterdayStr) {
-    // Studied yesterday → continue streak
+  if (last && last.toDateString() === yesterday.toDateString()) {
     user.studyStreak += 1
   } else {
-    // No study yesterday → reset streak to 1
     user.studyStreak = 1
   }
 
   user.lastStudiedAt = now
-  user.markModified('lastStudiedAt')
-  user.markModified('studyStreak')
   await user.save()
 }

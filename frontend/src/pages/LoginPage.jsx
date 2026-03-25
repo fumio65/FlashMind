@@ -1,13 +1,12 @@
-import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { useLogin } from '@/features/auth'
-import { useAuthStore } from '@/features/auth/store/authStore'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { BookOpen, LogIn } from 'lucide-react'
+import { useForm }           from 'react-hook-form'
+import { zodResolver }       from '@hookform/resolvers/zod'
+import { z }                 from 'zod'
+import { useLogin }          from '@/features/auth'
+import { useAuthStore }      from '@/features/auth/store/authStore'
+import { Button }            from '@/components/ui/button'
+import { Input }             from '@/components/ui/input'
+import { BookOpen, LogIn, AlertCircle } from 'lucide-react'
 
 const schema = z.object({
   email:    z.string().email('Enter a valid email address'),
@@ -16,18 +15,24 @@ const schema = z.object({
 
 export default function LoginPage() {
   const { login, isLoading, error } = useLogin()
-  const authUser                    = useAuthStore((s) => s.user)
-  const navigate                    = useNavigate()
+  const authUser = useAuthStore((s) => s.user)
+  const token    = useAuthStore((s) => s.token)
+  const navigate = useNavigate()
 
-  useEffect(() => {
-    if (authUser) navigate('/dashboard', { replace: true })
-  }, [authUser])
+  if (token && authUser) {
+    navigate(authUser.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
+    return null
+  }
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm({ resolver: zodResolver(schema) })
+
+  const onSubmit = async (data) => {
+    await login(data)
+  }
 
   return (
     <div className="min-h-screen grid md:grid-cols-2">
@@ -42,10 +47,13 @@ export default function LoginPage() {
             Welcome back. <br /> Let's get studying.
           </h2>
           <p className="text-primary-foreground/75 text-lg">
-            Pick up right where you left off. Your decks, your progress, your streak — all waiting for you.
+            Pick up right where you left off. Your decks, your progress,
+            your streak — all waiting for you.
           </p>
         </div>
-        <p className="text-primary-foreground/50 text-sm">© {new Date().getFullYear()} FlashMind</p>
+        <p className="text-primary-foreground/50 text-sm">
+          © {new Date().getFullYear()} FlashMind
+        </p>
       </div>
 
       {/* Right panel */}
@@ -64,13 +72,16 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <form onSubmit={handleSubmit(login)} className="flex flex-col gap-4">
-            {error && (
-              <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-md">
-                {error}
-              </div>
-            )}
+          {/* Error banner */}
+          {error && (
+            <div className="flex items-center gap-2 bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-md mb-4 border border-destructive/20">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
+          {/* No <form> tag — prevents any native browser submit */}
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-foreground">Email</label>
               <Input
@@ -78,6 +89,7 @@ export default function LoginPage() {
                 type="email"
                 placeholder="juan@example.com"
                 autoComplete="email"
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit(onSubmit)()}
               />
               {errors.email && (
                 <p className="text-destructive text-xs">{errors.email.message}</p>
@@ -96,23 +108,29 @@ export default function LoginPage() {
                 type="password"
                 placeholder="••••••••"
                 autoComplete="current-password"
+                onKeyDown={(e) => e.key === 'Enter' && handleSubmit(onSubmit)()}
               />
               {errors.password && (
                 <p className="text-destructive text-xs">{errors.password.message}</p>
               )}
             </div>
 
-            <Button type="submit" disabled={isLoading} className="mt-2">
+            <Button
+              type="button"
+              disabled={isLoading}
+              className="mt-2"
+              onClick={handleSubmit(onSubmit)}
+            >
               <LogIn className="h-4 w-4 mr-2" />
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
-          </form>
+          </div>
 
           {/* Demo accounts */}
           <div className="mt-8 p-4 bg-muted rounded-lg text-xs text-muted-foreground space-y-1">
             <p className="font-semibold text-foreground">Demo accounts</p>
-            <p>Student — juan@example.com / password123</p>
-            <p>Admin — admin@example.com / password123</p>
+            <p>Student — lhester@example.com / password123</p>
+            <p>Admin — admin@flashmind.com / Admin@12345</p>
           </div>
         </div>
       </div>

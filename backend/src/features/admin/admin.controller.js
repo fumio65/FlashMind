@@ -1,31 +1,29 @@
-import { User }         from '../../models/User.js'
-import { Class }        from '../../models/Class.js'
-import { Deck }         from '../../models/Deck.js'
-import { Card }         from '../../models/Card.js'
-import { StudySession } from '../../models/StudySession.js'
+import { Op }      from 'sequelize'
+import { User, Class, Deck, Card, StudySession } from '../../models/index.js'
 
 // GET /api/admin/stats
 export const getAdminStats = async (req, res) => {
   const [totalUsers, totalClasses, totalDecks, totalSessions] = await Promise.all([
-    User.countDocuments(),
-    Class.countDocuments(),
-    Deck.countDocuments(),
-    StudySession.countDocuments(),
+    User.count(),
+    Class.count(),
+    Deck.count(),
+    StudySession.count(),
   ])
 
-  const recentUsers = await User.find()
-    .sort({ createdAt: -1 })
-    .limit(5)
-    .select('name username email role status createdAt')
+  const recentUsers = await User.findAll({
+    order:      [['createdAt', 'DESC']],
+    limit:      5,
+    attributes: { exclude: ['password'] },
+  })
 
   res.json({
     totalUsers,
     totalClasses,
     totalDecks,
     totalSessions,
-    flaggedDecks: 0,  // Phase B+: implement reporting feature
-    recentUsers,
-    flagged: [],      // Phase B+: implement reporting feature
+    flaggedDecks: 0,
+    recentUsers:  recentUsers.map((u) => u.toJSON()),
+    flagged:      [],
   })
 }
 
@@ -33,27 +31,29 @@ export const getAdminStats = async (req, res) => {
 export const getAdminUsers = async (req, res) => {
   const { role, status, q } = req.query
 
-  const filter = {}
-  if (role   && role   !== 'all') filter.role   = role
-  if (status && status !== 'all') filter.status = status
+  const where = {}
+  if (role   && role   !== 'all') where.role   = role
+  if (status && status !== 'all') where.status = status
   if (q) {
-    filter.$or = [
-      { name:     { $regex: q, $options: 'i' } },
-      { username: { $regex: q, $options: 'i' } },
-      { email:    { $regex: q, $options: 'i' } },
+    where[Op.or] = [
+      { name:     { [Op.like]: `%${q}%` } },
+      { username: { [Op.like]: `%${q}%` } },
+      { email:    { [Op.like]: `%${q}%` } },
     ]
   }
 
-  const users = await User.find(filter)
-    .select('-password')
-    .sort({ createdAt: -1 })
+  const users = await User.findAll({
+    where,
+    attributes: { exclude: ['password'] },
+    order: [['createdAt', 'DESC']],
+  })
 
-  res.json(users)
+  res.json(users.map((u) => u.toJSON()))
 }
 
 // PUT /api/admin/users/:id/suspend
 export const suspendUser = async (req, res) => {
-  const user = await User.findById(req.params.id)
+  const user = await User.findByPk(req.params.id)
   if (!user) return res.status(404).json({ message: 'User not found' })
   if (user.role === 'admin') {
     return res.status(403).json({ message: 'Cannot suspend an admin' })
@@ -62,12 +62,12 @@ export const suspendUser = async (req, res) => {
   user.status = user.status === 'suspended' ? 'active' : 'suspended'
   await user.save()
 
-  res.json({ user, message: `User ${user.status}` })
+  res.json({ user: user.toJSON(), message: `User ${user.status}` })
 }
 
 // PUT /api/admin/users/:id/ban
 export const banUser = async (req, res) => {
-  const user = await User.findById(req.params.id)
+  const user = await User.findByPk(req.params.id)
   if (!user) return res.status(404).json({ message: 'User not found' })
   if (user.role === 'admin') {
     return res.status(403).json({ message: 'Cannot ban an admin' })
@@ -76,37 +76,44 @@ export const banUser = async (req, res) => {
   user.status = 'banned'
   await user.save()
 
-  res.json({ user, message: 'User banned' })
+  res.json({ user: user.toJSON(), message: 'User banned' })
 }
 
 // PUT /api/admin/users/:id/unban
 export const unbanUser = async (req, res) => {
-  const user = await User.findById(req.params.id)
+  const user = await User.findByPk(req.params.id)
   if (!user) return res.status(404).json({ message: 'User not found' })
 
   user.status = 'active'
   await user.save()
 
-  res.json({ user, message: 'User unbanned' })
+  res.json({ user: user.toJSON(), message: 'User unbanned' })
 }
 
 // GET /api/admin/classes
 export const getAdminClasses = async (req, res) => {
   const { q, status } = req.query
 
-  const filter = {}
-  if (status === 'public')  filter.isPublic = true
-  if (status === 'private') filter.isPublic = false
-  if (q) filter.name = { $regex: q, $options: 'i' }
+  const where = {}
+  if (status === 'public')  where.isPublic = true
+  if (status === 'private') where.isPublic = false
+  if (q) where.name = { [Op.like]: `%${q}%` }
 
-  const classes = await Class.find(filter)
-    .populate('owner', 'username avatar')
-    .sort({ createdAt: -1 })
+  const classes = await Class.findAll({
+    where,
+    include: [{ model: User, as: 'owner', attributes: ['id', 'username', 'avatar'] }],
+    order:   [['createdAt', 'DESC']],
+  })
 
   const withCounts = await Promise.all(
     classes.map(async (cls) => {
-      const deckCount = await Deck.countDocuments({ class: cls._id })
-      return { ...cls.toJSON(), deckCount }
+      const deckCount = await Deck.count({ where: { classId: cls.id } })
+      const json = cls.toJSON()
+      return {
+        ...json,
+        icon: { type: json.iconType, value: json.iconValue },
+        deckCount,
+      }
     })
   )
 
@@ -115,14 +122,10 @@ export const getAdminClasses = async (req, res) => {
 
 // DELETE /api/admin/classes/:id
 export const deleteAdminClass = async (req, res) => {
-  const cls = await Class.findById(req.params.id)
+  const cls = await Class.findByPk(req.params.id)
   if (!cls) return res.status(404).json({ message: 'Class not found' })
 
-  const decks = await Deck.find({ class: cls._id })
-  await Promise.all(decks.map((d) => Card.deleteMany({ deck: d._id })))
-  await Deck.deleteMany({ class: cls._id })
-  await cls.deleteOne()
-
+  await cls.destroy()
   res.json({ message: 'Class and all its decks deleted' })
 }
 
@@ -130,19 +133,23 @@ export const deleteAdminClass = async (req, res) => {
 export const getAdminDecks = async (req, res) => {
   const { q, status } = req.query
 
-  const filter = {}
-  if (status === 'public')  filter.isPublic = true
-  if (status === 'private') filter.isPublic = false
-  if (q) filter.title = { $regex: q, $options: 'i' }
+  const where = {}
+  if (status === 'public')  where.isPublic = true
+  if (status === 'private') where.isPublic = false
+  if (q) where.title = { [Op.like]: `%${q}%` }
 
-  const decks = await Deck.find(filter)
-    .populate('owner', 'username avatar')
-    .populate('class', 'name color icon')
-    .sort({ createdAt: -1 })
+  const decks = await Deck.findAll({
+    where,
+    include: [
+      { model: User,  as: 'owner', attributes: ['id', 'username', 'avatar'] },
+      { model: Class, as: 'class', attributes: ['id', 'name', 'color', 'iconType', 'iconValue'] },
+    ],
+    order: [['createdAt', 'DESC']],
+  })
 
   const withCards = await Promise.all(
     decks.map(async (deck) => {
-      const cardCount = await Card.countDocuments({ deck: deck._id })
+      const cardCount = await Card.count({ where: { deckId: deck.id } })
       return { ...deck.toJSON(), cardCount }
     })
   )
@@ -152,11 +159,9 @@ export const getAdminDecks = async (req, res) => {
 
 // DELETE /api/admin/decks/:id
 export const deleteAdminDeck = async (req, res) => {
-  const deck = await Deck.findById(req.params.id)
+  const deck = await Deck.findByPk(req.params.id)
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
 
-  await Card.deleteMany({ deck: deck._id })
-  await deck.deleteOne()
-
+  await deck.destroy()
   res.json({ message: 'Deck and all its cards deleted' })
 }

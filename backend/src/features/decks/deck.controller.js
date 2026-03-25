@@ -1,26 +1,36 @@
-import { Deck }  from '../../models/Deck.js'
-import { Card }  from '../../models/Card.js'
-import { Class } from '../../models/Class.js'
+import { Class, Deck, Card, User } from '../../models/index.js'
 
-// GET /api/decks/:id
+const formatDeck = (deck) => {
+  const json = deck.toJSON ? deck.toJSON() : deck
+  return {
+    ...json,
+    _id:   json.id,
+    owner: json.owner ? { ...json.owner, _id: json.owner.id } : null,
+    class: json.class ? { ...json.class, _id: json.class.id } : null,
+    cards: (json.cards ?? []).map((c) => ({ ...c, _id: c.id })),
+  }
+}
+
 // GET /api/decks/:id
 export const getDeck = async (req, res) => {
-  const deck = await Deck.findById(req.params.id)
-    .populate('owner', 'username avatar')
-    .populate('class', 'name color icon')
-
+  const deck = await Deck.findByPk(req.params.id, {
+    include: [
+      { model: User,  as: 'owner', attributes: ['id', 'username', 'avatar'] },
+      { model: Class, as: 'class', attributes: ['id', 'name', 'color', 'iconType', 'iconValue'] },
+      { model: Card,  as: 'cards', order: [['createdAt', 'ASC']] },
+    ],
+  })
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
 
-  // Block access to private decks for non-owners (admins can always see)
-  const isOwner = deck.owner._id.toString() === req.user._id.toString()
+  const isOwner = Number(deck.ownerId) === Number(req.user.id)
   const isAdmin = req.user.role === 'admin'
 
+  // Only block access if private AND not owner AND not admin
   if (!deck.isPublic && !isOwner && !isAdmin) {
     return res.status(403).json({ message: 'This deck is private' })
   }
 
-  const cards = await Card.find({ deck: deck._id }).sort({ createdAt: 1 })
-  res.json({ ...deck.toJSON(), cards })
+  res.json(formatDeck(deck))
 }
 
 // POST /api/decks
@@ -30,80 +40,83 @@ export const createDeck = async (req, res) => {
   if (!title)   return res.status(400).json({ message: 'Title is required' })
   if (!classId) return res.status(400).json({ message: 'Class ID is required' })
 
-  const cls = await Class.findById(classId)
+  const cls = await Class.findByPk(classId)
   if (!cls) return res.status(404).json({ message: 'Class not found' })
 
-  // Only class owner can add decks
-  if (cls.owner.toString() !== req.user._id.toString()) {
+  if (Number(cls.ownerId) !== Number(req.user.id)) {
     return res.status(403).json({ message: 'Not authorized' })
   }
 
   const deck = await Deck.create({
     title, description, isPublic,
-    class: classId,
-    owner: req.user._id,
+    classId,
+    ownerId: Number(req.user.id),
   })
 
-  // Create cards if provided
   let createdCards = []
   if (cards.length > 0) {
-    createdCards = await Card.insertMany(
+    createdCards = await Card.bulkCreate(
       cards.map((c) => ({
         front:      c.front,
         back:       c.back,
         frontImage: c.frontImage ?? null,
         backImage:  c.backImage  ?? null,
-        deck:       deck._id,
+        deckId:     deck.id,
       }))
     )
   }
 
-  await deck.populate('owner', 'username avatar')
-  res.status(201).json({ ...deck.toJSON(), cards: createdCards })
+  const full = await Deck.findByPk(deck.id, {
+    include: [{ model: User, as: 'owner', attributes: ['id', 'username', 'avatar'] }],
+  })
+
+  res.status(201).json(formatDeck({
+    ...full.toJSON(),
+    cards: createdCards.map((c) => ({ ...c.toJSON(), _id: c.id })),
+  }))
 }
 
 // PUT /api/decks/:id
 export const updateDeck = async (req, res) => {
-  const deck = await Deck.findById(req.params.id)
+  const deck = await Deck.findByPk(req.params.id)
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
 
-  if (deck.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (Number(deck.ownerId) !== Number(req.user.id) && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Not authorized' })
   }
 
   const { title, description, isPublic } = req.body
+  await deck.update({ title, description, isPublic })
 
-  const updated = await Deck.findByIdAndUpdate(
-    req.params.id,
-    { $set: { title, description, isPublic } },
-    { new: true, runValidators: true }
-  ).populate('owner', 'username avatar')
+  const full = await Deck.findByPk(deck.id, {
+    include: [
+      { model: User, as: 'owner', attributes: ['id', 'username', 'avatar'] },
+      { model: Card, as: 'cards', order: [['createdAt', 'ASC']] },
+    ],
+  })
 
-  const cards = await Card.find({ deck: updated._id }).sort({ createdAt: 1 })
-  res.json({ ...updated.toJSON(), cards })
+  res.json(formatDeck(full))
 }
 
 // DELETE /api/decks/:id
 export const deleteDeck = async (req, res) => {
-  const deck = await Deck.findById(req.params.id)
+  const deck = await Deck.findByPk(req.params.id)
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
 
-  if (deck.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (Number(deck.ownerId) !== Number(req.user.id) && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Not authorized' })
   }
 
-  await Card.deleteMany({ deck: deck._id })
-  await deck.deleteOne()
-
+  await deck.destroy()
   res.json({ message: 'Deck deleted successfully' })
 }
 
-// POST /api/decks/:id/cards — bulk add cards
+// POST /api/decks/:id/cards
 export const addCards = async (req, res) => {
-  const deck = await Deck.findById(req.params.id)
+  const deck = await Deck.findByPk(req.params.id)
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
 
-  if (deck.owner.toString() !== req.user._id.toString()) {
+  if (Number(deck.ownerId) !== Number(req.user.id)) {
     return res.status(403).json({ message: 'Not authorized' })
   }
 
@@ -112,15 +125,15 @@ export const addCards = async (req, res) => {
     return res.status(400).json({ message: 'No cards provided' })
   }
 
-  const created = await Card.insertMany(
+  const created = await Card.bulkCreate(
     cards.map((c) => ({
       front:      c.front,
       back:       c.back,
       frontImage: c.frontImage ?? null,
       backImage:  c.backImage  ?? null,
-      deck:       deck._id,
+      deckId:     deck.id,
     }))
   )
 
-  res.status(201).json(created)
+  res.status(201).json(created.map((c) => ({ ...c.toJSON(), _id: c.id })))
 }

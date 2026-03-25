@@ -1,14 +1,18 @@
-import { User } from '../models/User.js'
+import { User } from '../models/index.js'
+import bcrypt   from 'bcrypt'
 
 export const bootstrapAdmin = async () => {
   try {
-    const adminExists = await User.findOne({ role: 'admin' })
+    const adminExists = await User.findOne({ where: { role: 'admin' } })
     if (adminExists) {
       console.log(`✅ Admin exists: ${adminExists.email}`)
       return
     }
 
-    // No admin found — create default from env
+    const hashedPassword = await bcrypt.hash(
+      process.env.ADMIN_PASSWORD || 'Admin@12345', 10
+    )
+
     const admin = await User.create({
       name:     process.env.ADMIN_NAME     || 'Admin',
       username: process.env.ADMIN_USERNAME || 'admin',

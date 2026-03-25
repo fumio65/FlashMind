@@ -1,39 +1,37 @@
-import { CardRating } from '../../models/CardRating.js'
+import { CardRating } from '../../models/index.js'
 
-// POST /api/ratings — save multiple ratings at once
+// POST /api/ratings
 export const saveRatings = async (req, res) => {
   const { deckId, ratings } = req.body
-  // ratings = [{ cardId, rating }]
 
   if (!deckId || !ratings?.length) {
     return res.status(400).json({ message: 'deckId and ratings are required' })
   }
 
-  // Upsert each rating
   await Promise.all(
     ratings.map((r) =>
-      CardRating.findOneAndUpdate(
-        { user: req.user._id, card: r.cardId },
-        { user: req.user._id, card: r.cardId, deck: deckId, rating: r.rating },
-        { upsert: true, new: true }
-      )
+      CardRating.upsert({
+        userId: req.user.id,
+        cardId: r.cardId,
+        deckId,
+        rating: r.rating,
+      })
     )
   )
 
   res.json({ message: 'Ratings saved' })
 }
 
-// GET /api/ratings/:deckId — get user's ratings for a deck
+// GET /api/ratings/:deckId
 export const getDeckRatings = async (req, res) => {
-  const ratings = await CardRating.find({
-    user: req.user._id,
-    deck: req.params.deckId,
-  }).select('card rating')
+  const ratings = await CardRating.findAll({
+    where: { userId: req.user.id, deckId: req.params.deckId },
+    attributes: ['cardId', 'rating'],
+  })
 
-  // Return as { cardId: rating } map for easy lookup
   const ratingMap = {}
   ratings.forEach((r) => {
-    ratingMap[r.card.toString()] = r.rating
+    ratingMap[r.cardId] = r.rating
   })
 
   res.json(ratingMap)

@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState }     from 'react'
+import { useNavigate }  from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { loginUser } from '../api/auth.api'
+import { loginUser }    from '../api/auth.api'
 
 export function useLogin() {
   const [isLoading, setIsLoading] = useState(false)
@@ -15,7 +15,10 @@ export function useLogin() {
     try {
       const { token, user } = await loginUser(data)
       setAuth({ token, user })
-      navigate(user.role === 'admin' ? '/admin' : '/dashboard')
+      // Small delay so error state doesn't get wiped by re-render
+      setTimeout(() => {
+        navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
+      }, 50)
     } catch (err) {
       setError(err.response?.data?.message ?? 'Login failed')
     } finally {

@@ -1,41 +1,35 @@
-import { Card } from '../../models/Card.js'
-import { Deck } from '../../models/Deck.js'
+import { Card, Deck } from '../../models/index.js'
 
 // PUT /api/cards/:id
 export const updateCard = async (req, res) => {
-  const card = await Card.findById(req.params.id)
+  const card = await Card.findByPk(req.params.id)
   if (!card) return res.status(404).json({ message: 'Card not found' })
 
-  const deck = await Deck.findById(card.deck)
+  const deck = await Deck.findByPk(card.deckId)
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
 
-  if (deck.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (Number(deck.ownerId) !== Number(req.user.id) && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Not authorized' })
   }
 
   const { front, back, frontImage, backImage } = req.body
+  await card.update({ front, back, frontImage, backImage })
 
-  const updated = await Card.findByIdAndUpdate(
-    req.params.id,
-    { $set: { front, back, frontImage, backImage } },
-    { returnDocument: 'after', runValidators: true }
-  )
-
-  res.json(updated)
+  res.json({ ...card.toJSON(), _id: card.id })
 }
 
 // DELETE /api/cards/:id
 export const deleteCard = async (req, res) => {
-  const card = await Card.findById(req.params.id)
+  const card = await Card.findByPk(req.params.id)
   if (!card) return res.status(404).json({ message: 'Card not found' })
 
-  const deck = await Deck.findById(card.deck)
+  const deck = await Deck.findByPk(card.deckId)
   if (!deck) return res.status(404).json({ message: 'Deck not found' })
 
-  if (deck.owner.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+  if (Number(deck.ownerId) !== Number(req.user.id) && req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Not authorized' })
   }
 
-  await card.deleteOne()
+  await card.destroy()
   res.json({ message: 'Card deleted successfully' })
 }

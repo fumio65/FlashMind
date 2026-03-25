@@ -14,10 +14,15 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const url         = err.config?.url ?? ''
+    const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/register')
+    const is401       = err.response?.status === 401
+
+    if (is401 && !isAuthRoute) {
       useAuthStore.getState().clearAuth()
       window.location.href = '/login'
     }
+
     return Promise.reject(err)
   }
 )

@@ -1,13 +1,46 @@
-import mongoose from 'mongoose'
+import { DataTypes } from 'sequelize'
+import { sequelize } from '../lib/db.js'
 
-const studySessionSchema = new mongoose.Schema({
-  user:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  deck:       { type: mongoose.Schema.Types.ObjectId, ref: 'Deck', required: true },
-  mode:       { type: String, enum: ['flashcard', 'quiz'], required: true },
-  score:      { type: Number, default: 0 },
-  knownCount: { type: Number, default: 0 },
-  timeTaken:  { type: Number, default: 0 },
-  completedAt:{ type: Date, default: Date.now, index: true },
-}, { timestamps: true })
-
-export const StudySession = mongoose.model('StudySession', studySessionSchema)
+export const StudySession = sequelize.define('StudySession', {
+  id: {
+    type:          DataTypes.INTEGER,
+    autoIncrement: true,
+    primaryKey:    true,
+  },
+  userId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'user_id',
+  },
+  deckId: {
+    type:      DataTypes.INTEGER,
+    allowNull: false,
+    field:     'deck_id',
+  },
+  mode: {
+    type:      DataTypes.ENUM('flashcard', 'quiz'),
+    allowNull: false,
+  },
+  score: {
+    type:         DataTypes.INTEGER,
+    defaultValue: 0,
+  },
+  knownCount: {
+    type:         DataTypes.INTEGER,
+    defaultValue: 0,
+    field:        'known_count',
+  },
+  timeTaken: {
+    type:         DataTypes.INTEGER,
+    defaultValue: 0,
+    field:        'time_taken',
+  },
+  completedAt: {
+    type:         DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+    field:        'completed_at',
+  },
+}, {
+  tableName:  'study_sessions',
+  timestamps: true,
+})
