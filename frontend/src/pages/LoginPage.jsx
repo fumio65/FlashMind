@@ -125,13 +125,6 @@ export default function LoginPage() {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </div>
-
-          {/* Demo accounts */}
-          <div className="mt-8 p-4 bg-muted rounded-lg text-xs text-muted-foreground space-y-1">
-            <p className="font-semibold text-foreground">Demo accounts</p>
-            <p>Student — lhester@example.com / password123</p>
-            <p>Admin — admin@flashmind.com / Admin@12345</p>
-          </div>
         </div>
       </div>
     </div>
