@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuthStore }  from '@/features/auth/store/authStore'
-import { getClasses }    from '@/features/classes/api/classes'
+import { getClasses, getMyStats } from '@/features/classes/api/classes'
 import api               from '@/lib/axios'
 
 export function useProfile() {
@@ -13,12 +13,17 @@ export function useProfile() {
     Promise.all([
       getClasses({ onlyMine: true }),
       api.get('/sessions/me').then((r) => r.data),
+      getMyStats(),
     ])
-      .then(([myClasses, sessionData]) => {
+      .then(([myClasses, sessionData, stats]) => {
         setData({
           user,
           myClasses,
-          mySessions: sessionData.sessions,
+          mySessions:     sessionData.sessions,
+          cardsMastered:  stats.cardsMastered  ?? 0,
+          totalCards:     stats.totalCards     ?? 0,
+          mastery:        stats.mastery        ?? 0,
+          totalSessions:  stats.totalSessions  ?? 0,
         })
       })
       .finally(() => setIsLoading(false))
