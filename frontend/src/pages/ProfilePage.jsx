@@ -8,15 +8,16 @@ import { Button }            from "@/components/ui/button";
 import { Progress }          from "@/components/ui/progress";
 import { Input }             from "@/components/ui/input";
 import { Badge }             from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Link }              from "react-router-dom";
 import { ClassIcon }         from "@/features/classes/components/ClassIcon";
-import { updateProfile }     from "@/features/auth/api/auth.api";
+import { updateProfile, updatePassword } from "@/features/auth/api/auth.api";
 import { useAuthStore }      from "@/features/auth/store/authStore";
 import {
   Flame, Trophy, BookOpen, Clock, Play,
   Camera, Plus, ArrowRight, CheckCircle2,
   Timer, Globe, Lock, Check, X,
+  KeyRound, Eye, EyeOff, User, Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,19 +27,54 @@ const ROLE_COLORS = {
   student: "bg-primary/15 text-primary border-primary/20",
 };
 
+// Password input with show/hide toggle
+function PasswordInput({ value, onChange, placeholder }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div className="relative">
+      <Input
+        type={show ? "text" : "password"}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="pr-10"
+      />
+      <button type="button" onClick={() => setShow((v) => !v)}
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+        {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+      </button>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const { data, isLoading } = useProfile()
-  const [tab, setTab]                     = useState("subjects")
-  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [tab, setTab]                         = useState("subjects")
+  const [showEditDialog, setShowEditDialog]   = useState(false)
+  const [editTab, setEditTab]                 = useState("profile") // "profile" | "password"
   const [showAvatarPreview, setShowAvatarPreview] = useState(false)
-  const [editName, setEditName]           = useState("")
-  const [editUsername, setEditUsername]   = useState("")
-  const [pendingAvatar, setPendingAvatar] = useState(null)
-  const [isSaving, setIsSaving]           = useState(false)
-  const [isSavingAvatar, setIsSavingAvatar] = useState(false)
-  const [saveError, setSaveError]         = useState(null)
-  const fileInputRef                      = useRef(null)
-  const heroFileInputRef                  = useRef(null)
+
+  // Profile fields
+  const [editName, setEditName]               = useState("")
+  const [editUsername, setEditUsername]       = useState("")
+  const [pendingAvatar, setPendingAvatar]     = useState(null)
+  const [isSaving, setIsSaving]               = useState(false)
+  const [saveError, setSaveError]             = useState(null)
+  const [saveSuccess, setSaveSuccess]         = useState(null)
+
+  // Password fields
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword]         = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [isSavingPassword, setIsSavingPassword] = useState(false)
+  const [passwordError, setPasswordError]     = useState(null)
+  const [passwordSuccess, setPasswordSuccess] = useState(null)
+
+  // Avatar preview
+  const [isSavingAvatar, setIsSavingAvatar]   = useState(false)
+
+  const fileInputRef     = useRef(null)
+  const heroFileInputRef = useRef(null)
 
   const setAuth = useAuthStore((s) => s.setAuth)
   const token   = useAuthStore((s) => s.token)
@@ -51,45 +87,28 @@ export default function ProfilePage() {
     mastery = 0, totalSessions = 0,
   } = data
 
-  // Handle avatar selected from hero click
+  const currentAvatar = user?.avatar ?? null
+
+  // ── Avatar handlers ──
   const handleHeroAvatarChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => {
-      setPendingAvatar(reader.result)
-      setShowAvatarPreview(true)
-    }
+    reader.onload = () => { setPendingAvatar(reader.result); setShowAvatarPreview(true) }
     reader.readAsDataURL(file)
   }
 
-  // Save avatar immediately from preview modal
   const handleConfirmAvatar = async () => {
     setIsSavingAvatar(true)
     try {
-      const { user: updatedUser } = await updateProfile({
-        name:     user.name,
-        username: user.username,
-        avatar:   pendingAvatar,
-      })
+      const { user: updatedUser } = await updateProfile({ name: user.name, username: user.username, avatar: pendingAvatar })
       setAuth({ token, user: updatedUser })
       setShowAvatarPreview(false)
       setPendingAvatar(null)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setIsSavingAvatar(false)
-    }
+    } catch (err) { console.error(err) }
+    finally { setIsSavingAvatar(false) }
   }
 
-  const handleOpenEdit = () => {
-    setEditName(user?.name ?? "")
-    setEditUsername(user?.username ?? "")
-    setSaveError(null)
-    setShowEditDialog(true)
-  }
-
-  // Handle avatar change inside edit dialog
   const handleDialogAvatarChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -98,9 +117,27 @@ export default function ProfilePage() {
     reader.readAsDataURL(file)
   }
 
+  // ── Open edit dialog ──
+  const handleOpenEdit = (tab = "profile") => {
+    setEditName(user?.name ?? "")
+    setEditUsername(user?.username ?? "")
+    setPendingAvatar(null)
+    setSaveError(null)
+    setSaveSuccess(null)
+    setPasswordError(null)
+    setPasswordSuccess(null)
+    setCurrentPassword("")
+    setNewPassword("")
+    setConfirmPassword("")
+    setEditTab(tab)
+    setShowEditDialog(true)
+  }
+
+  // ── Save profile ──
   const handleSaveProfile = async () => {
     setIsSaving(true)
     setSaveError(null)
+    setSaveSuccess(null)
     try {
       const { user: updatedUser } = await updateProfile({
         name:     editName,
@@ -109,15 +146,35 @@ export default function ProfilePage() {
       })
       setAuth({ token, user: updatedUser })
       setPendingAvatar(null)
-      setShowEditDialog(false)
+      setSaveSuccess("Profile updated successfully!")
+      setTimeout(() => setShowEditDialog(false), 1000)
     } catch (err) {
       setSaveError(err.response?.data?.message ?? 'Failed to save profile')
-    } finally {
-      setIsSaving(false)
-    }
+    } finally { setIsSaving(false) }
   }
 
-  const currentAvatar = user?.avatar ?? null
+  // ── Save password ──
+  const handleSavePassword = async () => {
+    setPasswordError(null)
+    setPasswordSuccess(null)
+
+    if (!currentPassword) return setPasswordError("Current password is required")
+    if (!newPassword)      return setPasswordError("New password is required")
+    if (newPassword.length < 8) return setPasswordError("New password must be at least 8 characters")
+    if (newPassword !== confirmPassword) return setPasswordError("Passwords do not match")
+
+    setIsSavingPassword(true)
+    try {
+      await updatePassword({ currentPassword, newPassword })
+      setPasswordSuccess("Password changed successfully!")
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmPassword("")
+      setTimeout(() => setShowEditDialog(false), 1000)
+    } catch (err) {
+      setPasswordError(err.response?.data?.message ?? 'Failed to change password')
+    } finally { setIsSavingPassword(false) }
+  }
 
   return (
     <PageWrapper className="max-w-6xl">
@@ -130,10 +187,8 @@ export default function ProfilePage() {
             <p className="text-xs text-muted-foreground mt-1">Does this look good?</p>
           </div>
           <div className="p-6 flex flex-col items-center gap-6">
-            <div className="relative">
-              <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-border shadow-xl">
-                <img src={pendingAvatar} alt="preview" className="w-full h-full object-cover" />
-              </div>
+            <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-border shadow-xl">
+              <img src={pendingAvatar} alt="preview" className="w-full h-full object-cover" />
             </div>
             <div className="flex items-center gap-3 w-full">
               <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-border shrink-0">
@@ -170,7 +225,6 @@ export default function ProfilePage() {
                     {user?.name?.[0]?.toUpperCase() ?? "U"}
                   </AvatarFallback>
                 </Avatar>
-                {/* Overlay on hover */}
                 <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <Camera className="h-5 w-5 text-white" />
                 </div>
@@ -188,7 +242,12 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="flex gap-2 pb-1">
-              <Button variant="outline" size="sm" onClick={handleOpenEdit}>Edit Profile</Button>
+              <Button variant="outline" size="sm" onClick={() => handleOpenEdit("profile")}>
+                Edit Profile
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleOpenEdit("password")}>
+                <KeyRound className="h-3.5 w-3.5 mr-1.5" />Change Password
+              </Button>
               <Button size="sm" asChild>
                 <Link to="/classes/new"><Plus className="h-3.5 w-3.5 mr-1" />New Subject</Link>
               </Button>
@@ -256,7 +315,7 @@ export default function ProfilePage() {
       <div>
         <div className="flex border-b border-border mb-5">
           {[
-            { id: "subjects", icon: BookOpen, label: "My Subjects", count: myClasses.length },
+            { id: "subjects", icon: BookOpen, label: "My Subjects",   count: myClasses.length  },
             { id: "history",  icon: Clock,    label: "Study History", count: mySessions.length },
           ].map(({ id, icon: Icon, label, count }) => (
             <button key={id} onClick={() => setTab(id)}
@@ -372,76 +431,160 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* ── Edit Profile Dialog ── */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="w-[580px] p-0 overflow-hidden">
-          <div className="flex">
-            {/* Left panel — avatar */}
-            <div className="w-48 shrink-0 bg-muted/30 border-r border-border p-6 flex flex-col items-center gap-4">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide self-start">Photo</p>
-              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
-                  <AvatarImage src={pendingAvatar ?? currentAvatar} />
-                  <AvatarFallback className="text-3xl font-bold bg-primary/20 text-primary">
-                    {editName?.[0]?.toUpperCase() ?? "U"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Camera className="h-6 w-6 text-white" />
+      {/* ── Edit Profile / Change Password Dialog ── */}
+      <Dialog open={showEditDialog} onOpenChange={(open) => { setShowEditDialog(open); if (!open) setPendingAvatar(null) }}>
+        <DialogContent className="w-[620px] p-0 overflow-hidden">
+          <div className="flex h-full">
+
+            {/* ── Left sidebar ── */}
+            <div className="w-48 shrink-0 bg-muted/30 border-r border-border flex flex-col">
+              {/* Avatar */}
+              <div className="p-6 flex flex-col items-center gap-3 border-b border-border">
+                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                  <Avatar className="h-20 w-20 border-4 border-background shadow-xl">
+                    <AvatarImage src={pendingAvatar ?? currentAvatar} />
+                    <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary">
+                      {editName?.[0]?.toUpperCase() ?? "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Camera className="h-5 w-5 text-white" />
+                  </div>
                 </div>
+                <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => fileInputRef.current?.click()}>
+                  <Camera className="h-3 w-3 mr-1.5" />Change Photo
+                </Button>
+                <p className="text-[10px] text-muted-foreground text-center">JPG, PNG · Max 5MB</p>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleDialogAvatarChange} />
               </div>
-              <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => fileInputRef.current?.click()}>
-                <Camera className="h-3.5 w-3.5 mr-1.5" />Change Photo
-              </Button>
-              <p className="text-[10px] text-muted-foreground text-center leading-relaxed">
-                JPG, PNG or GIF<br />Max 5MB
-              </p>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleDialogAvatarChange} />
+
+              {/* Nav tabs */}
+              <nav className="p-3 flex flex-col gap-1">
+                <button onClick={() => setEditTab("profile")}
+                  className={cn("flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left",
+                    editTab === "profile" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                  <User className="h-4 w-4 shrink-0" />Profile Info
+                </button>
+                <button onClick={() => setEditTab("password")}
+                  className={cn("flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left",
+                    editTab === "password" ? "bg-primary/10 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted")}>
+                  <Shield className="h-4 w-4 shrink-0" />Change Password
+                </button>
+              </nav>
             </div>
 
-            {/* Right panel — fields */}
-            <div className="flex-1 flex flex-col">
-              <div className="px-6 pt-6 pb-4 border-b border-border">
-                <DialogTitle className="text-lg font-bold">Edit Profile</DialogTitle>
-                <p className="text-xs text-muted-foreground mt-1">Update your name, username and photo.</p>
+            {/* ── Right panel ── */}
+            <div className="flex-1 flex flex-col min-w-0">
+
+              {/* Header */}
+              <div className="px-6 pt-6 pb-4 border-b border-border shrink-0">
+                <DialogTitle className="text-lg font-bold">
+                  {editTab === "profile" ? "Edit Profile" : "Change Password"}
+                </DialogTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {editTab === "profile"
+                    ? "Update your name, username and photo."
+                    : "Keep your account secure with a strong password."}
+                </p>
               </div>
 
-              <div className="px-6 py-5 flex flex-col gap-4 flex-1">
-                {saveError && (
-                  <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-md">{saveError}</div>
-                )}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-foreground">Full Name</label>
-                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Your full name" />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-foreground">Username</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
-                    <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} placeholder="username" className="pl-7" />
+              {/* ── Profile tab ── */}
+              {editTab === "profile" && (
+                <>
+                  <div className="px-6 py-5 flex flex-col gap-4 flex-1 overflow-y-auto">
+                    {saveError && (
+                      <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg border border-destructive/20">
+                        {saveError}
+                      </div>
+                    )}
+                    {saveSuccess && (
+                      <div className="bg-green-500/10 text-green-500 text-sm px-4 py-3 rounded-lg border border-green-500/20 flex items-center gap-2">
+                        <Check className="h-4 w-4" />{saveSuccess}
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-foreground">Full Name</label>
+                      <Input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Your full name" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-foreground">Username</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">@</span>
+                        <Input value={editUsername} onChange={(e) => setEditUsername(e.target.value)} placeholder="username" className="pl-7" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-foreground">Email</label>
+                      <Input value={user?.email ?? ""} disabled className="opacity-50 cursor-not-allowed" />
+                      <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-foreground">Role</label>
+                      <div className={cn("inline-flex w-fit items-center text-xs font-semibold px-2.5 py-1 rounded-full border capitalize",
+                        ROLE_COLORS[user?.role] ?? "bg-muted text-muted-foreground")}>
+                        {user?.role}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-foreground">Email</label>
-                  <Input value={user?.email ?? ""} disabled className="opacity-50 cursor-not-allowed" />
-                  <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-semibold text-foreground">Role</label>
-                  <div className={cn("inline-flex w-fit items-center text-xs font-semibold px-2.5 py-1 rounded-full border capitalize",
-                    ROLE_COLORS[user?.role] ?? "bg-muted text-muted-foreground")}>
-                    {user?.role}
+                  <div className="px-6 py-4 border-t border-border flex justify-end gap-2 bg-muted/20 shrink-0">
+                    <Button variant="outline" onClick={() => { setShowEditDialog(false); setPendingAvatar(null) }}>Cancel</Button>
+                    <Button onClick={handleSaveProfile} disabled={isSaving}>
+                      <Check className="h-4 w-4 mr-1.5" />{isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
 
-              <div className="px-6 py-4 border-t border-border flex justify-end gap-2 bg-muted/20">
-                <Button variant="outline" onClick={() => { setShowEditDialog(false); setPendingAvatar(null) }}>Cancel</Button>
-                <Button onClick={handleSaveProfile} disabled={isSaving}>
-                  <Check className="h-4 w-4 mr-1.5" />
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
+              {/* ── Password tab ── */}
+              {editTab === "password" && (
+                <>
+                  <div className="px-6 py-5 flex flex-col gap-4 flex-1 overflow-y-auto">
+                    {passwordError && (
+                      <div className="bg-destructive/10 text-destructive text-sm px-4 py-3 rounded-lg border border-destructive/20">
+                        {passwordError}
+                      </div>
+                    )}
+                    {passwordSuccess && (
+                      <div className="bg-green-500/10 text-green-500 text-sm px-4 py-3 rounded-lg border border-green-500/20 flex items-center gap-2">
+                        <Check className="h-4 w-4" />{passwordSuccess}
+                      </div>
+                    )}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-foreground">Current Password</label>
+                      <PasswordInput value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-foreground">New Password</label>
+                      <PasswordInput value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min. 8 characters" />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-sm font-semibold text-foreground">Confirm New Password</label>
+                      <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" />
+                      {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                        <p className="text-xs text-destructive">Passwords do not match</p>
+                      )}
+                      {newPassword && confirmPassword && newPassword === confirmPassword && (
+                        <p className="text-xs text-green-500 flex items-center gap-1"><Check className="h-3 w-3" />Passwords match</p>
+                      )}
+                    </div>
+
+                    {/* Password strength hint */}
+                    <div className="p-3 bg-muted/40 rounded-lg border border-border text-xs text-muted-foreground space-y-1">
+                      <p className="font-semibold text-foreground mb-1.5">Password requirements:</p>
+                      <p className={cn("flex items-center gap-1.5", newPassword.length >= 8 ? "text-green-500" : "")}>
+                        <Check className={cn("h-3 w-3", newPassword.length >= 8 ? "text-green-500" : "text-muted-foreground")} />
+                        At least 8 characters
+                      </p>
+                    </div>
+                  </div>
+                  <div className="px-6 py-4 border-t border-border flex justify-end gap-2 bg-muted/20 shrink-0">
+                    <Button variant="outline" onClick={() => { setShowEditDialog(false) }}>Cancel</Button>
+                    <Button onClick={handleSavePassword} disabled={isSavingPassword}>
+                      <KeyRound className="h-4 w-4 mr-1.5" />{isSavingPassword ? "Changing..." : "Change Password"}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </DialogContent>
