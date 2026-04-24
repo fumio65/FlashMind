@@ -394,6 +394,8 @@ export function FlashcardMode({ deck }) {
         <FlipCard
           front={currentCard?.front}
           back={currentCard?.back}
+          frontImage={currentCard?.frontImage}
+          backImage={currentCard?.backImage}
           isFlipped={isFlipped}
           onClick={!stamp ? flip : undefined}
           prevLevel={prevLevel}
